@@ -1,0 +1,20 @@
+export const recitersData = [
+  { id: 'ar.alafasy', name: 'مشاري العفاسي', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.abdulbasitmurattal', name: 'عبدالباسط عبدالصمد (مرتل)', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.abdulbasitmujawwad', name: 'عبدالباسط عبدالصمد (مجوّد)', type: 'mujawwad', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.mahermuaiqly', name: 'ماهر المعيقلي', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.abdurrahmaansudais', name: 'عبدالرحمن السديس', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.saoodshuraym', name: 'سعود الشريم', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.minshawi', name: 'المنشاوي (مرتل)', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.minshawimujawwad', name: 'المنشاوي (مجوّد)', type: 'mujawwad', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.husary', name: 'محمود خليل الحصري (مرتل)', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.husarymujawwad', name: 'الحصري (مجوّد)', type: 'mujawwad', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.hudhaify', name: 'علي الحذيفي', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.ahmedajamy', name: 'أحمد العجمي', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.shaatree', name: 'أبو بكر الشاطري', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.muhammadayyoob', name: 'محمد أيوب', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.muhammadjibreel', name: 'محمد جبريل', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.hanirifai', name: 'هاني الرفاعي', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.khalefa', name: 'خليفة الطنيجي', type: 'murattal', narration: 'Hafs', gender: 'male' },
+  { id: 'ar.hussary_mujawwad_rare', name: 'الحصري (تسجيلات الإذاعة)', type: 'rare', narration: 'Hafs', gender: 'male' }
+];
