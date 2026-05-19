@@ -33,7 +33,7 @@ const Sahaba = () => {
               whileHover={{ y: -10, scale: 1.02 }}
               className={`relative h-96 rounded-[2rem] overflow-hidden flex flex-col justify-end p-8 transition-all border
                 ${theme === 'dark' 
-                   ? 'bg-gradient-to-t from-[#0B1120] to-[#111827] border-primary/20 shadow-lg hover:shadow-[0_15px_30px_rgba(198,162,102,0.2)] hover:border-primary/60' 
+                   ? 'bg-gradient-to-t from-[#022c22] to-[#064e3b] border-primary/20 shadow-lg hover:shadow-[0_15px_30px_rgba(198,162,102,0.2)] hover:border-primary/60' 
                    : 'bg-gradient-to-t from-gray-100 to-white border-secondary/10 shadow-md hover:shadow-xl hover:border-secondary/30'
                 }
               `}
@@ -45,7 +45,7 @@ const Sahaba = () => {
               
               <div className="relative z-10">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl mb-6 backdrop-blur-md border
-                  ${theme === 'dark' ? 'bg-[#111827]/50 border-primary/40 text-primary' : 'bg-white/80 border-secondary/20 text-secondary'}
+                  ${theme === 'dark' ? 'bg-[#064e3b]/50 border-primary/40 text-primary' : 'bg-white/80 border-secondary/20 text-secondary'}
                 `}>
                   {index + 1}
                 </div>

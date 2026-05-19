@@ -7,13 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        yaqeen: { light: '#e8f5e9', DEFAULT: '#4caf50', dark: '#2e7d32' },
         primary: "#C69C6D", // Rich Gold
-        secondary: "#0B1120", // Deep Midnight Navy
+        secondary: "#022c22", // Deep Emerald
         accent: "#D4AF37", // Vibrant Gold
         dark: {
-          bg: "#0B1120",
-          surface: "#111827",
-          border: "#1F2937"
+          bg: "#022c22",
+          surface: "#064e3b",
+          border: "#065f46"
         }
       },
       fontFamily: {

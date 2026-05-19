@@ -39,8 +39,7 @@ const fetchSurahs = async () => {
 };
 
 const Quran = () => {
-  const { theme, audioState, setReciter } = useAppStore();
-  const { reciter } = audioState;
+  const { theme, reciter, setReciter } = useAppStore();
   const [search, setSearch] = useState('');
   const [reciterOpen, setReciterOpen] = useState(false);
 

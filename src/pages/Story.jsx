@@ -30,7 +30,7 @@ const Story = () => {
     <div className="fixed inset-0 z-[100] flex flex-col font-ibm overflow-y-auto overflow-x-hidden min-h-screen">
       {/* Immersive Background */}
       <div className={`absolute inset-0 transition-colors duration-700
-        ${theme === 'dark' ? 'bg-[#0B1120]' : 'bg-[#e9e9db]'}
+        ${theme === 'dark' ? 'bg-[#022c22]' : 'bg-[#e9e9db]'}
       `}>
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-10 mix-blend-overlay"></div>
       </div>
@@ -68,7 +68,7 @@ const Story = () => {
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className={`w-full max-w-4xl p-6 md:p-16 rounded-[2rem] md:rounded-[3rem] shadow-2xl border flex flex-col justify-center min-h-[60vh] md:min-h-[50vh]
               ${theme === 'dark' 
-                ? 'bg-gradient-to-br from-[#111827] to-[#0B1120] border-primary/30 shadow-primary/5' 
+                ? 'bg-gradient-to-br from-[#064e3b] to-[#022c22] border-primary/30 shadow-primary/5' 
                 : 'bg-white border-secondary/10'}
             `}
           >

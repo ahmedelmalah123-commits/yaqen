@@ -36,7 +36,7 @@ const Seerah = () => {
                 
                 {/* Timeline Dot */}
                 <div className={`absolute left-4 md:left-1/2 w-6 h-6 rounded-full border-4 z-20 transition-all duration-300 md:-translate-x-1/2 md:translate-x-0 -translate-x-2.5 
-                  ${theme === 'dark' ? 'bg-[#0B1120] border-primary shadow-[0_0_15px_rgba(200,169,106,0.8)]' : 'bg-white border-secondary shadow-[0_0_10px_rgba(15,61,46,0.4)]'}
+                  ${theme === 'dark' ? 'bg-[#022c22] border-primary shadow-[0_0_15px_rgba(200,169,106,0.8)]' : 'bg-white border-secondary shadow-[0_0_10px_rgba(15,61,46,0.4)]'}
                 `}></div>
 
                 {/* Content Card container */}
@@ -46,7 +46,7 @@ const Seerah = () => {
                     whileHover={{ scale: 1.02 }}
                     className={`p-8 md:p-10 rounded-3xl border shadow-xl transition-all relative overflow-hidden
                       ${theme === 'dark' 
-                        ? 'bg-gradient-to-br from-[#0B1120] to-[#111827] border-primary/30 hover:shadow-[0_15px_30px_rgba(200,169,106,0.15)] text-white' 
+                        ? 'bg-gradient-to-br from-[#022c22] to-[#064e3b] border-primary/30 hover:shadow-[0_15px_30px_rgba(200,169,106,0.15)] text-white' 
                         : 'bg-white border-secondary/20 hover:shadow-[0_15px_30px_rgba(11,17,32,0.1)] text-secondary'
                       }
                     `}

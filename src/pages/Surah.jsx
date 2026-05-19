@@ -3,13 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../store/useAppStore';
-import { supabase } from '../lib/supabase';
 import { Play, Pause, ArrowRight, BookOpen, Mic2, X, SkipForward, SkipBack, Bookmark } from 'lucide-react';
 
 /* ─── Cinematic Listening Overlay ───────────────────────────────── */
-const CinematicOverlay = ({ surahData, audioState, user, onClose, onPlayPause, onNext, onPrev }) => {
-  const { currentIndex, isPlaying, surah } = audioState;
-  const [isSaving, setIsSaving] = useState(false);
+const CinematicOverlay = ({ surahData, currentIndex, isPlaying, onClose, onPlayPause, onNext, onPrev }) => {
   const [isSaved, setIsSaved] = useState(false);
   const ayah = surahData?.ayahs?.[currentIndex];
   if (!ayah) return null;
@@ -22,27 +19,20 @@ const CinematicOverlay = ({ surahData, audioState, user, onClose, onPlayPause, o
   // Reset saved state when ayah changes
   useEffect(() => { setIsSaved(false); }, [currentIndex]);
 
-  const handleBookmark = async () => {
-    if (!user) {
-      alert('الرجاء تسجيل الدخول أولاً لحفظ الآيات');
-      return;
+  const handleBookmark = () => {
+    const bookmarks = JSON.parse(localStorage.getItem('yaqeen_bookmarks') || '[]');
+    const entry = {
+      surah_id: surahData.number,
+      surah_name: surahData.name.replace('سُورَةُ ', ''),
+      ayah_num: ayah.numberInSurah,
+      ayah_text: ayahText,
+      saved_at: new Date().toISOString(),
+    };
+    const exists = bookmarks.some(b => b.surah_id === entry.surah_id && b.ayah_num === entry.ayah_num);
+    if (!exists) {
+      localStorage.setItem('yaqeen_bookmarks', JSON.stringify([...bookmarks, entry]));
     }
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from('bookmarks').insert({
-        user_id: user.id,
-        surah_id: surahData.number,
-        surah_name: surahData.name.replace('سُورَةُ ', ''),
-        ayah_num: ayah.numberInSurah,
-        ayah_text: ayahText
-      });
-      if (error) throw error;
-      setIsSaved(true);
-    } catch {
-      alert('حدث خطأ أثناء الحفظ');
-    } finally {
-      setIsSaving(false);
-    }
+    setIsSaved(true);
   };
 
   return (
@@ -229,15 +219,20 @@ const fetchSurahData = async ({ queryKey, signal }) => {
 
 const Surah = () => {
   const { id } = useParams();
-  const { theme, audioState, setAudioState, setReciter, playSurah, user } = useAppStore();
+  const { theme, reciter, setYaqeenModeActive } = useAppStore();
   const [showTafsir, setShowTafsir] = useState(false);
   const [showCinema, setShowCinema] = useState(false);
   const [autoPlayPending, setAutoPlayPending] = useState(false);
   
-  const activeAyahRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const { isPlaying, currentIndex, surah, reciter } = audioState;
-  const isActiveSurah = surah?.number === parseInt(id);
+  const audio1Ref = useRef(new Audio());
+  const audio2Ref = useRef(new Audio());
+  const activePlayer = useRef(1);
+  
+  const activeAyahRef = useRef(null);
+  const isActiveSurah = true;
 
   const { data, isLoading: loading, error } = useQuery({
     queryKey: ['surah', id, reciter],
@@ -249,6 +244,19 @@ const Surah = () => {
   const tafsirData = data?.tafsirData;
 
   useEffect(() => {
+    // Cleanup audio on unmount
+    const a1 = audio1Ref.current;
+    const a2 = audio2Ref.current;
+    return () => {
+      a1.pause();
+      a1.src = '';
+      a2.pause();
+      a2.src = '';
+      setYaqeenModeActive(false);
+    };
+  }, []);
+
+  useEffect(() => {
     if (autoPlayPending && surahData) {
       handlePlaySurah(currentIndex);
       setAutoPlayPending(false);
@@ -256,34 +264,107 @@ const Surah = () => {
   }, [surahData, autoPlayPending]);
 
   useEffect(() => {
-    if (isActiveSurah && activeAyahRef.current) {
+    if (activeAyahRef.current) {
       activeAyahRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [currentIndex, isActiveSurah]);
+  }, [currentIndex]);
 
-  const handlePlaySurah = (startIndex = 0) => {
-    if (surahData) {
-      playSurah({ number: surahData.number, name: surahData.name }, surahData.ayahs, startIndex);
+  const preloadNext = (idx) => {
+    if (!surahData || idx >= surahData.ayahs.length) return;
+    const nextAudio = activePlayer.current === 1 ? audio2Ref.current : audio1Ref.current;
+    if (nextAudio.src !== surahData.ayahs[idx].audio) {
+       nextAudio.src = surahData.ayahs[idx].audio;
+       nextAudio.load();
+    }
+  };
+
+  const handleEnded = () => {
+    if (!surahData) return;
+    if (currentIndex + 1 < surahData.ayahs.length) {
+       const nextIndex = currentIndex + 1;
+       activePlayer.current = activePlayer.current === 1 ? 2 : 1;
+       const currentAudio = activePlayer.current === 1 ? audio1Ref.current : audio2Ref.current;
+       
+       currentAudio.play().catch(() => {});
+       setCurrentIndex(nextIndex);
+       preloadNext(nextIndex + 1);
+    } else {
+       setIsPlaying(false);
+       setCurrentIndex(0);
+    }
+  };
+
+  useEffect(() => {
+    const a1 = audio1Ref.current;
+    const a2 = audio2Ref.current;
+    a1.addEventListener('ended', handleEnded);
+    a2.addEventListener('ended', handleEnded);
+    return () => {
+      a1.removeEventListener('ended', handleEnded);
+      a2.removeEventListener('ended', handleEnded);
+    };
+  }, [currentIndex, surahData]);
+
+  const handlePlaySurah = async (startIndex = 0) => {
+    if (!surahData) return;
+    const currentAudio = activePlayer.current === 1 ? audio1Ref.current : audio2Ref.current;
+    const nextAudio = activePlayer.current === 1 ? audio2Ref.current : audio1Ref.current;
+
+    if (isPlaying && currentIndex === startIndex) {
+       currentAudio.pause();
+       setIsPlaying(false);
+       return;
+    }
+    
+    // Stop anything playing
+    audio1Ref.current.pause();
+    audio2Ref.current.pause();
+    
+    setCurrentIndex(startIndex);
+    currentAudio.src = surahData.ayahs[startIndex].audio;
+    currentAudio.load();
+    
+    try {
+      await currentAudio.play();
+      setIsPlaying(true);
       setShowCinema(true);
+      setYaqeenModeActive(true);
+      preloadNext(startIndex + 1);
+    } catch (err) {
+      console.error(err);
+      setIsPlaying(false);
     }
   };
 
   const handleCinemaClose = () => {
     setShowCinema(false);
+    // keep Yaqeen mode active if still playing
   };
 
   const handleCinemaPlayPause = () => {
-    setAudioState({ isPlaying: !audioState.isPlaying });
+    const currentAudio = activePlayer.current === 1 ? audio1Ref.current : audio2Ref.current;
+    if (isPlaying) {
+      currentAudio.pause();
+      setIsPlaying(false);
+      setYaqeenModeActive(false);
+    } else {
+      if (!currentAudio.src) {
+        handlePlaySurah(currentIndex);
+      } else {
+        currentAudio.play();
+        setIsPlaying(true);
+      }
+    }
   };
 
   const handleCinemaNext = () => {
     if (currentIndex < surahData.ayahs.length - 1)
-      playSurah({ number: surahData.number, name: surahData.name }, surahData.ayahs, currentIndex - 1);
+      handlePlaySurah(currentIndex + 1);
   };
 
   const handleCinemaPrev = () => {
     if (currentIndex > 0)
-      playSurah({ number: surahData.number, name: surahData.name }, surahData.ayahs, currentIndex + 1);
+      handlePlaySurah(currentIndex - 1);
   };
 
   if (loading && !surahData) return (
@@ -318,8 +399,8 @@ const Surah = () => {
         {showCinema && isActiveSurah && (
           <CinematicOverlay
             surahData={surahData}
-            audioState={audioState}
-            user={user}
+            currentIndex={currentIndex}
+            isPlaying={isPlaying}
             onClose={handleCinemaClose}
             onPlayPause={handleCinemaPlayPause}
             onNext={handleCinemaNext}
@@ -516,14 +597,11 @@ const Surah = () => {
                      </button>
 
                      <button 
-                       onClick={async () => {
-                          if (!user) { alert('الرجاء تسجيل الدخول أولاً لحفظ الآيات'); return; }
-                          try {
-                            await supabase.from('bookmarks').insert({
-                              user_id: user.id, surah_id: surahData.number, surah_name: surahData.name.replace('سُورَةُ ', ''), ayah_num: ayah.numberInSurah, ayah_text: ayahText
-                            });
-                            alert('تم حفظ الآية!');
-                          } catch (err) { alert('حدث خطأ أثناء الحفظ'); }
+                       onClick={() => {
+                          const bookmarks = JSON.parse(localStorage.getItem('yaqeen_bookmarks') || '[]');
+                          const entry = { surah_id: surahData.number, surah_name: surahData.name.replace('سُورَةُ ', ''), ayah_num: ayah.numberInSurah, ayah_text: ayahText, saved_at: new Date().toISOString() };
+                          const exists = bookmarks.some(b => b.surah_id === entry.surah_id && b.ayah_num === entry.ayah_num);
+                          if (!exists) localStorage.setItem('yaqeen_bookmarks', JSON.stringify([...bookmarks, entry]));
                        }}
                        className={`p-2.5 rounded-full transition-all
                          ${theme === 'dark' ? 'bg-primary/10 text-primary hover:bg-primary hover:text-secondary' : 'bg-secondary/10 text-secondary hover:bg-secondary hover:text-white'}

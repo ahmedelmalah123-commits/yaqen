@@ -18,7 +18,7 @@ const RecitersPage = () => {
   return (
     <div className="py-12 max-w-6xl mx-auto px-4 font-tajawal pb-32">
       <div className={`relative rounded-[3rem] p-12 mb-12 overflow-hidden text-center border shadow-2xl transition-colors duration-500
-        ${theme === 'dark' ? 'bg-gradient-to-br from-[#0B1120] to-[#111827] border-primary/30 text-white' 
+        ${theme === 'dark' ? 'bg-gradient-to-br from-[#022c22] to-[#064e3b] border-primary/30 text-white' 
           : 'bg-gradient-to-br from-white to-[#FAF8F5] border-secondary/20 text-secondary'}
       `}>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-10 mix-blend-overlay border-none"></div>
@@ -31,7 +31,7 @@ const RecitersPage = () => {
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-8">
-         <div className={`flex items-center flex-1 p-4 rounded-2xl border ${theme === 'dark' ? 'bg-[#0B1120] border-primary/20' : 'bg-white border-secondary/10'}`}>
+         <div className={`flex items-center flex-1 p-4 rounded-2xl border ${theme === 'dark' ? 'bg-[#022c22] border-primary/20' : 'bg-white border-secondary/10'}`}>
             <Search className={`mr-3 ${theme === 'dark' ? 'text-primary' : 'text-secondary'}`} />
             <input 
               type="text" 
@@ -63,7 +63,7 @@ const RecitersPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          {filteredReciters.map(reciter => (
             <div key={reciter.id} className={`p-6 rounded-3xl border flex flex-col items-center text-center transition-all hover:scale-105 shadow-md
-               ${theme === 'dark' ? 'bg-[#111827]/50 border-primary/20 hover:border-primary/50' : 'bg-white border-secondary/10 hover:border-secondary/40'}
+               ${theme === 'dark' ? 'bg-[#064e3b]/50 border-primary/20 hover:border-primary/50' : 'bg-white border-secondary/10 hover:border-secondary/40'}
             `}>
                <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 border-2
                  ${theme === 'dark' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-secondary/5 border-secondary/20 text-secondary'}

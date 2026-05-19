@@ -13,13 +13,11 @@ const navLinks = [
   { path: '/sahaba', label: 'الصحابة', icon: Users },
   { path: '/ruqyah', label: 'الحصن', icon: Shield },
   { path: '/seerah', label: 'السيرة', icon: Compass },
-  { path: '/nafha', label: 'نفحة', icon: Wind },
-  { path: '/dashboard', label: 'حسابي', icon: UserCircle },
 ];
 
 const Navbar = () => {
   const location = useLocation();
-  const { theme } = useAppStore();
+  const { theme, isYaqeenModeActive } = useAppStore();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const { scrollY } = useScroll();
@@ -58,7 +56,7 @@ const Navbar = () => {
       initial={{ y: 0 }}
       animate={{ y: isHidden ? '-100%' : 0 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className={`fixed top-0 z-40 w-full backdrop-blur-xl transition-colors duration-500 border-b ${theme === 'dark' ? 'bg-[#0B1120]/80 border-primary/20' : 'bg-[#FAF8F5]/80 border-secondary/10 shadow-sm'}`}
+      className={`fixed top-0 z-40 w-full backdrop-blur-xl transition-colors duration-500 border-b ${theme === 'dark' ? 'bg-[#022c22]/80 border-primary/20' : 'bg-[#FAF8F5]/80 border-secondary/10 shadow-sm'}`}
     >
       <div className="container mx-auto px-4 h-20 md:h-28 flex items-center justify-between gap-2">
         <div className="flex shrink-0 items-center gap-4">
@@ -111,13 +109,36 @@ const Navbar = () => {
               </Link>
             );
           })}
+
+          {/* Yaqeen Mode Quick-Link */}
+          <Link
+            to="/yaqeen"
+            className={`relative flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all border
+              ${
+                isActivePath('/yaqeen')
+                  ? 'bg-primary text-secondary border-primary shadow-[0_0_18px_rgba(198,156,109,0.5)]'
+                  : (theme === 'dark'
+                    ? 'border-primary/30 text-primary/80 hover:bg-primary/10 hover:border-primary'
+                    : 'border-secondary/30 text-secondary/70 hover:bg-secondary/10 hover:border-secondary')
+              }
+            `}
+          >
+            {isYaqeenModeActive && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+              </span>
+            )}
+            <PlayCircle size={16} />
+            وضع اليقين
+          </Link>
         </div>
       </div>
     </motion.nav>
 
     {/* Mobile Bottom Tab Bar */}
     <nav className={`md:hidden fixed bottom-14 left-0 right-0 z-40 backdrop-blur-xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] pb-[env(safe-area-inset-bottom)]
-        ${theme === 'dark' ? 'bg-[#0B1120]/90 border-primary/20 text-white' : 'bg-white/90 border-secondary/10 text-secondary'}
+        ${theme === 'dark' ? 'bg-[#022c22]/90 border-primary/20 text-white' : 'bg-white/90 border-secondary/10 text-secondary'}
     `}>
       <div className="flex items-center justify-around h-16 w-full">
          {mobileTopLinks.map((link) => {
@@ -149,7 +170,7 @@ const Navbar = () => {
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           className={`md:hidden fixed inset-x-0 bottom-0 z-50 h-[85vh] rounded-t-3xl shadow-2xl flex flex-col pt-6 font-tajawal
-             ${theme === 'dark' ? 'bg-[#0B1120] text-white border-t border-primary/30' : 'bg-[#FAF8F5] text-secondary border-t border-secondary/20'}
+             ${theme === 'dark' ? 'bg-[#022c22] text-white border-t border-primary/30' : 'bg-[#FAF8F5] text-secondary border-t border-secondary/20'}
           `}
         >
           <div className="flex justify-between items-center px-6">

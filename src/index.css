@@ -23,7 +23,8 @@
 
   body {
     @apply antialiased text-primary;
-    font-family: theme('fontFamily.tajawal');
+    font-family: 'Cairo', sans-serif;
+    direction: rtl;
     background-color: theme('colors.secondary');
     background-image: url('https://www.transparenttextures.com/patterns/arabesque.png');
     background-attachment: fixed;
@@ -121,7 +122,7 @@
   }
   
   .dark .glass-card {
-    @apply bg-[#111827]/60 border-primary/20 shadow-[0_8px_30px_rgb(0,0,0,0.2)];
+    @apply bg-[#064e3b]/60 border-primary/20 shadow-[0_8px_30px_rgb(0,0,0,0.2)];
   }
 
   /* ── Touch-friendly input sizing ── */

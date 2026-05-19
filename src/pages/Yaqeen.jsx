@@ -6,7 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import ParticlesBackground from '../components/ParticlesBackground';
 
 const Yaqeen = () => {
-  const { theme, audioState, setAudioState } = useAppStore();
+  const { theme, setYaqeenModeActive } = useAppStore();
+  const [isPlaying, setIsPlaying] = useState(false);
   const navigate = useNavigate();
   const [ayah, setAyah] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,7 +20,7 @@ const Yaqeen = () => {
     setLoading(true);
     setTransitioning(false);
     if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
-    if (audioState.isPlaying) setAudioState({ isPlaying: false });
+    if (isPlaying) setIsPlaying(false);
 
     const randomAyahId = Math.floor(Math.random() * 6236) + 1;
 
@@ -34,7 +35,8 @@ const Yaqeen = () => {
         setLoading(false);
         setAyahCount(prev => prev + 1);
         setTimeout(() => {
-          setAudioState({ isPlaying: true });
+          setIsPlaying(true);
+          setYaqeenModeActive(true);
         }, 500);
       })
       .catch(() => {
@@ -43,7 +45,8 @@ const Yaqeen = () => {
   };
 
   const handleAyahEnded = () => {
-    setAudioState({ isPlaying: false });
+    setIsPlaying(false);
+    setYaqeenModeActive(false);
     setTransitioning(true);
     autoAdvanceTimer.current = setTimeout(() => {
       fetchRandomAyah();
@@ -53,20 +56,21 @@ const Yaqeen = () => {
   useEffect(() => {
     fetchRandomAyah();
     return () => {
-      setAudioState({ isPlaying: false });
+      setIsPlaying(false);
+      setYaqeenModeActive(false);
       if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
     };
   }, []);
 
   useEffect(() => {
     if (audioRef.current && ayah) {
-      if (audioState.isPlaying) {
+      if (isPlaying) {
         audioRef.current.play().catch(() => {});
       } else {
         audioRef.current.pause();
       }
     }
-  }, [audioState.isPlaying, ayah]);
+  }, [isPlaying, ayah]);
 
   const handleExit = () => navigate('/');
 
@@ -77,10 +81,10 @@ const Yaqeen = () => {
       <motion.div
         animate={{
           background: [
-            "radial-gradient(circle at 10% 20%, rgba(198,162,102,0.2) 0%, rgba(11,17,32,1) 70%)",
-            "radial-gradient(circle at 90% 80%, rgba(198,162,102,0.1) 0%, rgba(11,17,32,1) 80%)",
-            "radial-gradient(circle at 50% 10%, rgba(198,162,102,0.25) 0%, rgba(8,12,20,1) 60%)",
-            "radial-gradient(circle at 10% 20%, rgba(198,162,102,0.2) 0%, rgba(11,17,32,1) 70%)"
+            "radial-gradient(circle at 10% 20%, rgba(6,78,59,0.6) 0%, rgba(2,44,34,1) 70%)",
+            "radial-gradient(circle at 90% 80%, rgba(198,156,109,0.15) 0%, rgba(2,44,34,1) 80%)",
+            "radial-gradient(circle at 50% 10%, rgba(6,78,59,0.5) 0%, rgba(1,30,20,1) 60%)",
+            "radial-gradient(circle at 10% 20%, rgba(6,78,59,0.6) 0%, rgba(2,44,34,1) 70%)"
           ]
         }}
         transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
@@ -132,10 +136,10 @@ const Yaqeen = () => {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => setAudioState({ isPlaying: !audioState.isPlaying })}
+              onClick={() => setIsPlaying(p => !p)}
               className="mt-12 md:mt-20 w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-primary/40 flex items-center justify-center text-primary hover:bg-primary hover:text-secondary transition-all shadow-[0_0_30px_rgba(198,162,102,0.3)] backdrop-blur-md"
             >
-              {audioState.isPlaying ? <Pause fill="currentColor" className="w-8 h-8 md:w-10 md:h-10" /> : <Play fill="currentColor" className="w-8 h-8 md:w-10 md:h-10 ml-2" />}
+              {isPlaying ? <Pause fill="currentColor" className="w-8 h-8 md:w-10 md:h-10" /> : <Play fill="currentColor" className="w-8 h-8 md:w-10 md:h-10 ml-2" />}
             </motion.button>
           </motion.div>
         )}

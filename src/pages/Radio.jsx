@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { radioData } from '../lib/data/radioData';
 import { Radio as RadioIcon, Play, Pause, Waves } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Radio = () => {
-  const { theme, audioState, playRadio, setAudioState } = useAppStore();
+  const { theme } = useAppStore();
+  const audioRef = useRef(null);
+  const [playingStation, setPlayingStation] = useState(null);
 
   return (
     <div className="py-12 max-w-6xl mx-auto px-4 font-ibm">
       
       {/* Hero Header */}
       <div className={`relative rounded-[3rem] p-12 mb-12 overflow-hidden text-center border shadow-2xl transition-colors duration-500
-        ${theme === 'dark' ? 'bg-gradient-to-br from-[#0B1120] to-[#111827] border-primary/30 text-white' 
+        ${theme === 'dark' ? 'bg-gradient-to-br from-[#022c22] to-[#064e3b] border-primary/30 text-white' 
           : 'bg-gradient-to-br from-white to-[#FAF8F5] border-secondary/20 text-secondary'}
       `}>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-10 mix-blend-overlay border-none"></div>
@@ -31,8 +33,8 @@ const Radio = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 mb-32">
         {radioData.map((station, index) => {
           
-          const isCurrentStationPlaying = audioState.isRadio && audioState.isPlaying && audioState.surah?.name === station.name;
-          const isCurrentStationPaused = audioState.isRadio && !audioState.isPlaying && audioState.surah?.name === station.name;
+          const isCurrentStationPlaying = playingStation === station.name;
+          const isCurrentStationPaused = false;
 
           return (
             <motion.div 
@@ -42,15 +44,19 @@ const Radio = () => {
               transition={{ delay: index * 0.1 }}
               onClick={() => {
                  if (isCurrentStationPlaying) {
-                    setAudioState({ isPlaying: false });
+                    audioRef.current.pause();
+                    setPlayingStation(null);
                  } else {
-                    playRadio(station.name, station.url);
+                    if (playingStation) audioRef.current.pause();
+                    audioRef.current.src = station.url;
+                    audioRef.current.play();
+                    setPlayingStation(station.name);
                  }
               }}
               className={`group flex items-center justify-between p-8 rounded-3xl border-2 cursor-pointer transition-all shadow-lg hover:-translate-y-2 hover:shadow-2xl
                 ${(isCurrentStationPlaying || isCurrentStationPaused) 
-                  ? (theme === 'dark' ? 'bg-[#111827] border-primary shadow-[0_0_30px_rgba(200,169,106,0.2)] scale-[1.02]' : 'bg-[#e9e9db] border-secondary shadow-xl scale-[1.02]')
-                  : (theme === 'dark' ? 'bg-[#111827]/40 border-primary/20 hover:border-primary/60' : 'bg-white border-secondary/10 hover:border-secondary/40')
+                  ? (theme === 'dark' ? 'bg-[#064e3b] border-primary shadow-[0_0_30px_rgba(200,169,106,0.2)] scale-[1.02]' : 'bg-[#e9e9db] border-secondary shadow-xl scale-[1.02]')
+                  : (theme === 'dark' ? 'bg-[#064e3b]/40 border-primary/20 hover:border-primary/60' : 'bg-white border-secondary/10 hover:border-secondary/40')
                 }
               `}
             >
@@ -85,6 +91,7 @@ const Radio = () => {
         })}
       </div>
 
+      <audio ref={audioRef} onEnded={() => setPlayingStation(null)} />
     </div>
   );
 };

@@ -37,7 +37,7 @@ const Home = () => {
         className="w-full text-center mt-6 md:mt-12 px-4"
       >
         <div className={`relative w-full max-w-6xl mx-auto py-12 md:py-24 px-6 md:px-12 rounded-[2rem] md:rounded-[3rem] overflow-hidden glass-card
-          ${theme === 'dark' ? 'bg-gradient-to-br from-[#0B1120]/90 to-[#111827]/90 border-primary/30' : 'bg-gradient-to-br from-[#FAF8F5]/90 to-white/90 border-secondary/10'}
+          ${theme === 'dark' ? 'bg-gradient-to-br from-[#022c22]/90 to-[#064e3b]/90 border-primary/30' : 'bg-gradient-to-br from-[#FAF8F5]/90 to-white/90 border-secondary/10'}
         `}>
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-10 mix-blend-multiply"></div>
 
@@ -82,8 +82,7 @@ const Home = () => {
             { title: "الصحابة", icon: <Users size={28} />, path: "/sahaba", desc: "سيرهم العطرة" },
             { title: "السيرة", icon: <Compass size={28} />, path: "/seerah", desc: "خط زمني تفاعلي" },
             { title: "الرقية", icon: <Shield size={28} />, path: "/ruqyah", desc: "حصن المسلم" },
-            { title: "نوادر", icon: <Sparkles size={28} />, path: "/rare-recitations", desc: "تسجيلات مفقودة" },
-            { title: "نفحة", icon: <Wind size={28} />, path: "/nafha", desc: "رسائل إيجابية" }
+            { title: "نوادر", icon: <Sparkles size={28} />, path: "/rare-recitations", desc: "تسجيلات مفقودة" }
           ].map((feature, i) => (
             <Link to={feature.path} key={i}>
               <motion.div

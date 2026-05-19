@@ -14,7 +14,7 @@ const ruqyahText = [
 ];
 
 const AdhkarTab = ({ title, icon: Icon, adhkars, theme }) => (
-  <div className={`p-8 rounded-[2rem] border-2 shadow-xl ${theme === 'dark' ? 'bg-[#111827] border-primary/20 text-white' : 'bg-white border-secondary/10 text-secondary'}`}>
+  <div className={`p-8 rounded-[2rem] border-2 shadow-xl ${theme === 'dark' ? 'bg-[#064e3b] border-primary/20 text-white' : 'bg-white border-secondary/10 text-secondary'}`}>
     <div className="flex items-center justify-center md:justify-start gap-4 mb-8 border-b border-dashed pb-4 shrink-0" style={{borderColor: theme === 'dark' ? 'rgba(198,162,102,0.3)' : 'rgba(11,17,32,0.2)'}}>
       <Icon size={32} className={theme === 'dark' ? 'text-primary' : 'text-secondary'} />
       <h2 className="text-3xl font-cairo font-bold tracking-wider">{title}</h2>
@@ -37,7 +37,7 @@ const Ruqyah = () => {
     <div className="py-12 max-w-6xl mx-auto px-4 font-readex pb-40">
       
       <div className={`relative rounded-[3rem] p-12 mb-10 overflow-hidden text-center border shadow-2xl transition-colors duration-500
-        ${theme === 'dark' ? 'bg-gradient-to-br from-[#0B1120] to-[#111827] border-primary/30 text-white' 
+        ${theme === 'dark' ? 'bg-gradient-to-br from-[#022c22] to-[#064e3b] border-primary/30 text-white' 
           : 'bg-gradient-to-br from-white to-[#FAF8F5] border-secondary/20 text-secondary'}
       `}>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-10 mix-blend-overlay"></div>
