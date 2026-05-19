@@ -89,7 +89,7 @@ const CinematicOverlay = ({ surahData, currentIndex, isPlaying, onClose, onPlayP
 
       {/* Controls */}
       <div className="absolute bottom-16 flex items-center gap-6 md:gap-8 z-50">
-        <button onClick={handleBookmark} disabled={isSaving || isSaved} className={`p-4 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-md transition-all ${isSaved ? 'text-green-400' : 'text-primary'} disabled:opacity-50`}>
+        <button onClick={handleBookmark} disabled={isSaved} className={`p-4 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-md transition-all ${isSaved ? 'text-green-400' : 'text-primary'} disabled:opacity-50`}>
           <Bookmark size={24} className={isSaved ? "fill-current" : ""} />
         </button>
         <button onClick={onPrev} disabled={currentIndex === 0} className="p-3 rounded-full bg-white/5 hover:bg-white/15 text-primary backdrop-blur-md transition-all disabled:opacity-30">

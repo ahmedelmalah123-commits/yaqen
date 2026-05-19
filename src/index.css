@@ -136,3 +136,15 @@
     text-align: right;
   }
 }
+
+/* ── Mobile Quran Text Legibility & Tashkeel spacing (max-width: 640px) ── */
+@media (max-width: 640px) {
+  .font-amiri {
+    line-height: 2.8 !important;         /* Vertical separation to prevent Tashkeel overlap */
+    letter-spacing: 0.06em !important;    /* Horizontal breathing room for letter strokes */
+    font-weight: 400 !important;          /* Elegant, lighter weight to reduce harakat boldness */
+    font-variation-settings: "wght" 400 !important;
+    text-shadow: none !important;         /* Remove text-shadow for absolute crispness */
+  }
+}
+
