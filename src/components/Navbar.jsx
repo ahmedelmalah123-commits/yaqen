@@ -137,7 +137,7 @@ const Navbar = () => {
     </motion.nav>
 
     {/* Mobile Bottom Tab Bar */}
-    <nav className={`md:hidden fixed bottom-14 left-0 right-0 z-40 backdrop-blur-xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] pb-[env(safe-area-inset-bottom)]
+    <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] pb-[env(safe-area-inset-bottom)]
         ${theme === 'dark' ? 'bg-[#022c22]/90 border-primary/20 text-white' : 'bg-white/90 border-secondary/10 text-secondary'}
     `}>
       <div className="flex items-center justify-around h-16 w-full">
