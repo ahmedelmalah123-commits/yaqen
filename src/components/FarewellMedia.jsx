@@ -125,27 +125,32 @@ const FarewellMedia = () => {
            {/* Video Mode Container */}
            <div className={`transition-all duration-500 ${mode === 'video' ? 'opacity-100 scale-100' : 'hidden opacity-0 scale-95'}`}>
               <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border-[6px] border-black/10 bg-black group">
-                {mode === 'video' && (
-                  <ReactPlayer
-                    url={videoUrl}
-                    width="100%"
-                    height="100%"
-                    controls={true}
-                    playing={isPlaying}
-                    light="https://img.youtube.com/vi/lDeF9l_pdcU/hqdefault.jpg" // Always exists
-                    playIcon={
+                {mode === 'video' && !isPlaying && (
+                  <div 
+                    className="absolute inset-0 cursor-pointer group" 
+                    onClick={() => setIsPlaying(true)}
+                  >
+                    <img 
+                      src="https://img.youtube.com/vi/lDeF9l_pdcU/hqdefault.jpg" 
+                      alt="Thumbnail" 
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300" 
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors">
                       <div className="w-20 h-20 md:w-24 md:h-24 bg-primary/90 text-secondary rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(212,175,55,0.6)] backdrop-blur-md transition-transform duration-300 group-hover:scale-110 border-4 border-white/20">
                         <Play size={40} className="ml-2" fill="currentColor" />
                       </div>
-                    }
-                    config={{
-                      youtube: {
-                        playerVars: { modestbranding: 1, rel: 0, showinfo: 0 }
-                      }
-                    }}
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                  />
+                    </div>
+                  </div>
+                )}
+                {mode === 'video' && isPlaying && (
+                  <iframe 
+                    className="w-full h-full"
+                    src="https://www.youtube.com/embed/lDeF9l_pdcU?autoplay=1&rel=0&modestbranding=1&showinfo=0" 
+                    title="خطبة الوداع ويوم فتح مكة" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowFullScreen>
+                  </iframe>
                 )}
               </div>
            </div>
@@ -158,7 +163,7 @@ const FarewellMedia = () => {
                 
                 {/* Hidden YouTube Player for Audio Extraction */}
                 {mode === 'audio' && (
-                  <div className="absolute opacity-0 pointer-events-none w-[1px] h-[1px] overflow-hidden -z-10">
+                  <div className="fixed top-[-9999px] left-[-9999px] w-[200px] h-[200px]">
                     <ReactPlayer
                       ref={playerRef}
                       url={videoUrl}
