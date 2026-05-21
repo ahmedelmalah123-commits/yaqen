@@ -156,10 +156,7 @@ const FarewellMedia = () => {
            </div>
 
            {/* Audio Mode Container */}
-           <div className={`transition-all duration-500 ${mode === 'audio' ? 'block' : 'hidden'}`}>
-             <div className={`p-8 md:p-12 rounded-[2.5rem] flex flex-col items-center gap-8 shadow-xl border
-               ${theme === 'dark' ? 'bg-black/30 border-white/5' : 'bg-white/80 border-black/5 backdrop-blur-md'}
-             `}>
+           <div className={`transition-all duration-500 relative overflow-hidden rounded-[2.5rem] shadow-xl border ${mode === 'audio' ? 'block' : 'hidden'} ${theme === 'dark' ? 'border-white/5' : 'border-black/5'}`}>
                 
              {/* Always mount the YouTube Player in the background so it's ready immediately */}
              <div className="absolute inset-0 z-0 opacity-[0.01] pointer-events-none overflow-hidden">
@@ -181,8 +178,8 @@ const FarewellMedia = () => {
                />
              </div>
 
-             <div className={`relative z-10 p-8 md:p-12 rounded-[2.5rem] flex flex-col items-center gap-8 shadow-xl border
-               ${theme === 'dark' ? 'bg-[#022c22]/95 border-white/5' : 'bg-[#FAF8F5]/95 border-black/5'}
+             <div className={`relative z-10 p-8 md:p-12 flex flex-col items-center gap-8
+               ${theme === 'dark' ? 'bg-[#022c22]/95' : 'bg-[#FAF8F5]/95'}
              `}>
                 <div className={`w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center shadow-inner relative
                   ${theme === 'dark' ? 'bg-white/5 text-primary' : 'bg-black/5 text-secondary'}
