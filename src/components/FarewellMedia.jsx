@@ -161,28 +161,29 @@ const FarewellMedia = () => {
                ${theme === 'dark' ? 'bg-black/30 border-white/5' : 'bg-white/80 border-black/5 backdrop-blur-md'}
              `}>
                 
-                {/* Hidden YouTube Player for Audio Extraction */}
-                {mode === 'audio' && (
-                  <div className="fixed top-[-9999px] left-[-9999px] w-[200px] h-[200px]">
-                    <ReactPlayer
-                      ref={playerRef}
-                      url={videoUrl}
-                      width="100%"
-                      height="100%"
-                      playing={isPlaying}
-                      volume={isMuted ? 0 : 1}
-                      onProgress={handleProgress}
-                      onDuration={handleDuration}
-                      onEnded={() => setIsPlaying(false)}
-                      config={{
-                        youtube: {
-                          playerVars: { modestbranding: 1, playsinline: 1 }
-                        }
-                      }}
-                    />
-                  </div>
-                )}
+             {/* Always mount the YouTube Player in the background so it's ready immediately */}
+             <div className="absolute inset-0 z-0 opacity-[0.01] pointer-events-none overflow-hidden">
+               <ReactPlayer
+                 ref={playerRef}
+                 url={videoUrl}
+                 width="100%"
+                 height="100%"
+                 playing={mode === 'audio' && isPlaying}
+                 volume={isMuted ? 0 : 1}
+                 onProgress={handleProgress}
+                 onDuration={handleDuration}
+                 onEnded={() => setIsPlaying(false)}
+                 config={{
+                   youtube: {
+                     playerVars: { modestbranding: 1, playsinline: 1 }
+                   }
+                 }}
+               />
+             </div>
 
+             <div className={`relative z-10 p-8 md:p-12 rounded-[2.5rem] flex flex-col items-center gap-8 shadow-xl border
+               ${theme === 'dark' ? 'bg-[#022c22]/95 border-white/5' : 'bg-[#FAF8F5]/95 border-black/5'}
+             `}>
                 <div className={`w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center shadow-inner relative
                   ${theme === 'dark' ? 'bg-white/5 text-primary' : 'bg-black/5 text-secondary'}
                 `}>
