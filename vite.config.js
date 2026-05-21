@@ -34,6 +34,17 @@ export default defineConfig({
         navigateFallbackDenylist: [/\.mp3$/],
         runtimeCaching: [
           {
+            urlPattern: /\.mp3$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'audio-cache',
+              rangeRequests: true,
+              cacheableResponse: {
+                statuses: [0, 200, 206]
+              }
+            }
+          },
+          {
             urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
             handler: 'CacheFirst',
             options: {
