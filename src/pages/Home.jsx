@@ -135,7 +135,7 @@ const Home = () => {
           transition={{ delay: 2.5, duration: 2 }}
           className="text-center font-playpen text-lg text-white/40 tracking-widest select-none"
         >
-          هذا الموقع لا يزال تحت التجربة (نسخة بيتا)
+          هذا الموقع لا يزال في إصداره التجريبي (بيتا)
         </motion.div>
       </div>
     </div>

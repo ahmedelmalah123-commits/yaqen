@@ -120,7 +120,7 @@ const CinematicIntro = ({ onComplete }) => {
             transition={{ duration: 2, delay: 3.5 }}
             className="absolute bottom-16 left-0 right-0 text-center font-playpen text-xl md:text-2xl text-white select-none z-50 px-4"
           >
-            هذا الموقع لازال اصدار تجريبي بيتا
+            هذا الموقع لا يزال في إصداره التجريبي (بيتا)
           </motion.div>
         </motion.div>
       )}

@@ -89,22 +89,22 @@ const Story = () => {
       </div>
 
       {/* Footer Controls */}
-      <div className="relative z-10 w-full p-8 flex items-center justify-center gap-6">
+      <div className="relative z-10 w-full p-8 flex items-center justify-center gap-6" dir="rtl">
          <button 
-           onClick={handleNext}
-           disabled={currentSlide === story.slides.length - 1}
-           className={`p-5 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed
-             ${theme === 'dark' ? 'bg-primary text-secondary hover:bg-white hover:scale-105' : 'bg-secondary text-white hover:bg-black hover:scale-105'}
+           onClick={handlePrev}
+           disabled={currentSlide === 0}
+           className={`p-5 rounded-full border-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed
+             ${theme === 'dark' ? 'border-primary/50 text-primary hover:bg-primary/10' : 'border-secondary/50 text-secondary hover:bg-secondary/10'}
            `}
          >
            <ChevronRight size={32} />
          </button>
          
          <button 
-           onClick={handlePrev}
-           disabled={currentSlide === 0}
-           className={`p-5 rounded-full border-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed
-             ${theme === 'dark' ? 'border-primary/50 text-primary hover:bg-primary/10' : 'border-secondary/50 text-secondary hover:bg-secondary/10'}
+           onClick={handleNext}
+           disabled={currentSlide === story.slides.length - 1}
+           className={`p-5 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed
+             ${theme === 'dark' ? 'bg-primary text-secondary hover:bg-white hover:scale-105' : 'bg-secondary text-white hover:bg-black hover:scale-105'}
            `}
          >
            <ChevronLeft size={32} />
