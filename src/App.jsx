@@ -49,17 +49,29 @@ function App() {
   const { theme } = useAppStore();
 
   useEffect(() => {
-    // Set global media session metadata so the logo appears in the lock screen/control center
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: 'يقين — معرفة تُثمر يقيناً',
-        artist: 'منصة يقين',
-        artwork: [
-          { src: window.location.origin + '/logo.png', sizes: '192x192', type: 'image/png' },
-          { src: window.location.origin + '/logo.png', sizes: '512x512', type: 'image/png' }
-        ]
-      });
-    }
+    // Function to set global media session metadata
+    const setMediaMetadata = () => {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: 'يقين — معرفة تُثمر يقيناً',
+          artist: 'منصة يقين',
+          artwork: [
+            { src: 'https://yaaqeen.netlify.app/logo.png', type: 'image/png' },
+            { src: window.location.origin + '/logo.png', type: 'image/png' }
+          ]
+        });
+      }
+    };
+
+    // Set initially
+    setMediaMetadata();
+
+    // Re-apply when any audio starts playing, as iOS sometimes clears metadata
+    document.addEventListener('play', setMediaMetadata, true);
+
+    return () => {
+      document.removeEventListener('play', setMediaMetadata, true);
+    };
   }, []);
 
   return (
