@@ -14,7 +14,6 @@ const FarewellMedia = () => {
   const playerRef = useRef(null);
 
   const videoUrl = "https://youtu.be/lDeF9l_pdcU?si=QkTNzbLNSVKIe4Fo";
-  const thumbnailUrl = "https://img.youtube.com/vi/lDeF9l_pdcU/maxresdefault.jpg";
 
   // Pause playback when switching modes
   useEffect(() => {
@@ -133,7 +132,7 @@ const FarewellMedia = () => {
                     height="100%"
                     controls={true}
                     playing={isPlaying}
-                    light={thumbnailUrl} // Solves the YouTube UI issue beautifully
+                    light={true} // Solves the YouTube UI issue beautifully and automatically fetches the thumbnail
                     playIcon={
                       <div className="w-20 h-20 md:w-24 md:h-24 bg-primary/90 text-secondary rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(212,175,55,0.6)] backdrop-blur-md transition-transform duration-300 group-hover:scale-110 border-4 border-white/20">
                         <Play size={40} className="ml-2" fill="currentColor" />
@@ -159,12 +158,12 @@ const FarewellMedia = () => {
                 
                 {/* Hidden YouTube Player for Audio Extraction */}
                 {mode === 'audio' && (
-                  <div className="hidden">
+                  <div className="absolute opacity-0 pointer-events-none w-[1px] h-[1px] overflow-hidden -z-10">
                     <ReactPlayer
                       ref={playerRef}
                       url={videoUrl}
-                      width="0"
-                      height="0"
+                      width="100%"
+                      height="100%"
                       playing={isPlaying}
                       volume={isMuted ? 0 : 1}
                       onProgress={handleProgress}
