@@ -132,7 +132,7 @@ const FarewellMedia = () => {
                     height="100%"
                     controls={true}
                     playing={isPlaying}
-                    light={true} // Solves the YouTube UI issue beautifully and automatically fetches the thumbnail
+                    light="https://img.youtube.com/vi/lDeF9l_pdcU/hqdefault.jpg" // Always exists
                     playIcon={
                       <div className="w-20 h-20 md:w-24 md:h-24 bg-primary/90 text-secondary rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(212,175,55,0.6)] backdrop-blur-md transition-transform duration-300 group-hover:scale-110 border-4 border-white/20">
                         <Play size={40} className="ml-2" fill="currentColor" />
