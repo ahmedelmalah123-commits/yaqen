@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { BookOpen, Users, Compass, ChevronLeft, Shield, Radio, Smile, Mic, Sparkles, Wind } from 'lucide-react';
 import SeasonalWidget from '../components/SeasonalWidget';
+import FarewellMedia from '../components/FarewellMedia';
 
 const Home = () => {
   const { theme } = useAppStore();
@@ -72,6 +73,9 @@ const Home = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Farewell Sermon and Conquest of Mecca Section */}
+      <FarewellMedia />
 
       {/* Seasonal Dhul-Hijjah & Arafat Widget */}
       <SeasonalWidget />
