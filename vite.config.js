@@ -31,6 +31,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        navigateFallbackDenylist: [/\.mp3$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
