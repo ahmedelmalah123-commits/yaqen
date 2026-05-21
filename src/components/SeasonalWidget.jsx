@@ -27,7 +27,7 @@ const TASBIH_PHRASES = [
 const AUDIO_SOURCES = {
   eid: {
     title: "تكبيرات العيد",
-    url: "/audio/takbeerat-eid.mp3"
+    url: "/audio/takbeerat-eid.mp3?v=2"
   },
   dhulhijjah: {
     title: "تكبيرات ذي الحجة",
@@ -50,6 +50,12 @@ const SeasonalWidget = () => {
 
   const audioRef = useRef(null);
 
+  const activeAudioKeyRef = useRef(activeAudioKey);
+
+  useEffect(() => {
+    activeAudioKeyRef.current = activeAudioKey;
+  }, [activeAudioKey]);
+
   // Initialize Audio
   useEffect(() => {
     const audio = new Audio();
@@ -58,44 +64,51 @@ const SeasonalWidget = () => {
 
     // Add audio event listeners for robust state management
     const handleLoadStart = () => {
-      if (activeAudioKey) {
-        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'loading' }));
+      const currentKey = activeAudioKeyRef.current;
+      if (currentKey) {
+        setPlaybackStates(prev => ({ ...prev, [currentKey]: 'loading' }));
       }
     };
 
     const handleCanPlay = () => {
-      if (activeAudioKey && audio.paused === false) {
-        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'playing' }));
+      const currentKey = activeAudioKeyRef.current;
+      if (currentKey && audio.paused === false) {
+        setPlaybackStates(prev => ({ ...prev, [currentKey]: 'playing' }));
       }
     };
 
     const handlePlaying = () => {
-      if (activeAudioKey) {
-        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'playing' }));
+      const currentKey = activeAudioKeyRef.current;
+      if (currentKey) {
+        setPlaybackStates(prev => ({ ...prev, [currentKey]: 'playing' }));
       }
     };
 
     const handleWaiting = () => {
-      if (activeAudioKey) {
-        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'loading' }));
+      const currentKey = activeAudioKeyRef.current;
+      if (currentKey) {
+        setPlaybackStates(prev => ({ ...prev, [currentKey]: 'loading' }));
       }
     };
 
     const handlePause = () => {
-      if (activeAudioKey) {
-        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'paused' }));
+      const currentKey = activeAudioKeyRef.current;
+      if (currentKey) {
+        setPlaybackStates(prev => ({ ...prev, [currentKey]: 'paused' }));
       }
     };
 
     const handleError = () => {
-      if (activeAudioKey) {
-        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'error' }));
+      const currentKey = activeAudioKeyRef.current;
+      if (currentKey) {
+        setPlaybackStates(prev => ({ ...prev, [currentKey]: 'error' }));
       }
     };
 
     const handleEnded = () => {
-      if (activeAudioKey) {
-        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'idle' }));
+      const currentKey = activeAudioKeyRef.current;
+      if (currentKey) {
+        setPlaybackStates(prev => ({ ...prev, [currentKey]: 'idle' }));
       }
     };
 
@@ -117,7 +130,7 @@ const SeasonalWidget = () => {
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [activeAudioKey]);
+  }, []);
 
   const handleAudioAction = (key) => {
     const audio = audioRef.current;
@@ -143,6 +156,7 @@ const SeasonalWidget = () => {
 
       // Switch audio source
       setActiveAudioKey(key);
+      activeAudioKeyRef.current = key; // Update ref synchronously for immediate event listener access
       setPlaybackStates(prev => ({ ...prev, [key]: 'loading' }));
       audio.src = AUDIO_SOURCES[key].url;
       audio.load();
