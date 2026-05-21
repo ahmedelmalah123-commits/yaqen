@@ -122,6 +122,26 @@ const FarewellMedia = () => {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto">
+           {/* Always mount the YouTube Player OUTSIDE any hidden containers to prevent browser iframe suspension */}
+           <div className="fixed top-[0px] left-[0px] w-[200px] h-[200px] opacity-[0.01] pointer-events-none z-[-1]">
+             <ReactPlayer
+               ref={playerRef}
+               url={videoUrl}
+               width="100%"
+               height="100%"
+               playing={mode === 'audio' && isPlaying}
+               volume={isMuted ? 0 : 1}
+               onProgress={handleProgress}
+               onDuration={handleDuration}
+               onEnded={() => setIsPlaying(false)}
+               config={{
+                 youtube: {
+                   playerVars: { modestbranding: 1, playsinline: 1 }
+                 }
+               }}
+             />
+           </div>
+
            {/* Video Mode Container */}
            <div className={`transition-all duration-500 ${mode === 'video' ? 'opacity-100 scale-100' : 'hidden opacity-0 scale-95'}`}>
               <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border-[6px] border-black/10 bg-black group">
@@ -157,27 +177,6 @@ const FarewellMedia = () => {
 
            {/* Audio Mode Container */}
            <div className={`transition-all duration-500 relative overflow-hidden rounded-[2.5rem] shadow-xl border ${mode === 'audio' ? 'block' : 'hidden'} ${theme === 'dark' ? 'border-white/5' : 'border-black/5'}`}>
-                
-             {/* Always mount the YouTube Player in the background so it's ready immediately */}
-             <div className="absolute inset-0 z-0 opacity-[0.01] pointer-events-none overflow-hidden">
-               <ReactPlayer
-                 ref={playerRef}
-                 url={videoUrl}
-                 width="100%"
-                 height="100%"
-                 playing={mode === 'audio' && isPlaying}
-                 volume={isMuted ? 0 : 1}
-                 onProgress={handleProgress}
-                 onDuration={handleDuration}
-                 onEnded={() => setIsPlaying(false)}
-                 config={{
-                   youtube: {
-                     playerVars: { modestbranding: 1, playsinline: 1 }
-                   }
-                 }}
-               />
-             </div>
-
              <div className={`relative z-10 p-8 md:p-12 flex flex-col items-center gap-8
                ${theme === 'dark' ? 'bg-[#022c22]/95' : 'bg-[#FAF8F5]/95'}
              `}>
