@@ -25,11 +25,13 @@ const SearchOverlay = ({ isOpen, onClose }) => {
   const { theme, setReciter } = useAppStore();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState({ surahs: [], reciters: [], radios: [] });
+  const [versesResults, setVersesResults] = useState([]);
+  const [isSearchingVerses, setIsSearchingVerses] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!query.trim()) {
-      setResults({ surahs: [], reciters: [] });
+      setResults({ surahs: [], reciters: [], radios: [] });
       return;
     }
     const q = query.toLowerCase();
@@ -44,6 +46,33 @@ const SearchOverlay = ({ isOpen, onClose }) => {
     const matchedRadios = radioData.filter(r => r.name.toLowerCase().includes(q)).slice(0, 5);
     
     setResults({ surahs: matchedSurahs, reciters: matchedReciters, radios: matchedRadios });
+  }, [query]);
+
+  // Smart debounced verse search using external Quran API
+  useEffect(() => {
+    if (!query.trim() || query.length < 3) {
+      setVersesResults([]);
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      setIsSearchingVerses(true);
+      try {
+        const response = await fetch(`https://api.alquran.cloud/v1/search/${encodeURIComponent(query)}/all/ar`);
+        const json = await response.json();
+        if (json.code === 200 && json.data && json.data.matches) {
+          setVersesResults(json.data.matches.slice(0, 10));
+        } else {
+          setVersesResults([]);
+        }
+      } catch (err) {
+        console.error("Error searching verses:", err);
+      } finally {
+        setIsSearchingVerses(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(delayDebounce);
   }, [query]);
 
   if (!isOpen) return null;
@@ -66,7 +95,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                <input 
                  autoFocus
                  type="text" 
-                 placeholder="ابحث عن أسم سورة أو قارئ..." 
+                 placeholder="ابحث عن اسم سورة، قارئ، أو كلمة قرآنيـة..." 
                  value={query}
                  onChange={e => setQuery(e.target.value)}
                  className={`flex-1 bg-transparent text-xl font-bold outline-none font-tajawal
@@ -159,7 +188,47 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                      </div>
                    )}
 
-                   {results.surahs.length === 0 && results.reciters.length === 0 && (!results.radios || results.radios.length === 0) && (
+                   {/* Verses Results */}
+                   {isSearchingVerses && (
+                     <div className="flex items-center justify-center py-6 gap-3">
+                       <div className="w-5 h-5 rounded-full border-2 border-[#C8A96A] border-t-transparent animate-spin"></div>
+                       <span className={`text-md font-bold ${theme === 'dark' ? 'text-[#C8A96A]' : 'text-[#0F3D2E]'}`}>جاري البحث في آيات الذكر الحكيم...</span>
+                     </div>
+                   )}
+
+                   {versesResults.length > 0 && (
+                     <div>
+                       <h3 className={`text-sm font-bold mb-3 opacity-70 mt-4 ${theme === 'dark' ? 'text-[#C8A96A]' : 'text-[#0F3D2E]'}`}>الآيـات الـقرآنـيـة</h3>
+                       <div className="space-y-3">
+                         {versesResults.map((verse, idx) => (
+                           <button 
+                             key={`${verse.number}-${idx}`}
+                             onClick={() => { 
+                               onClose(); 
+                               navigate(`/surah/${verse.surah.number}`, { state: { highlightAyahIndex: verse.numberInSurah - 1 } }); 
+                             }}
+                             className={`w-full text-right p-4 rounded-2xl transition-all border flex flex-col gap-2.5
+                               ${theme === 'dark' ? 'hover:bg-[#C8A96A]/10 text-white bg-emerald-950/20 border-[#C8A96A]/15' : 'hover:bg-black/5 text-[#0F3D2E] bg-gray-50 border-gray-150'}
+                             `}
+                           >
+                             <p className="font-uthmanic text-xl leading-relaxed text-right w-full font-bold">
+                               {verse.text}
+                             </p>
+                             <div className="flex justify-between items-center text-xs opacity-75 font-tajawal w-full">
+                               <span className={`px-2.5 py-0.5 rounded-full border ${theme === 'dark' ? 'bg-[#0A291F] text-[#C8A96A] border-[#C8A96A]/20' : 'bg-[#FAF8F5] text-secondary border-secondary/20'}`}>
+                                 سورة {verse.surah.name.replace('سُورَةُ ', '')} - الآية {verse.numberInSurah.toLocaleString('ar-EG')}
+                               </span>
+                               <span className="flex items-center gap-1">
+                                 الانتقال والاستماع <ArrowLeft size={12} />
+                               </span>
+                             </div>
+                           </button>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+
+                   {results.surahs.length === 0 && results.reciters.length === 0 && (!results.radios || results.radios.length === 0) && versesResults.length === 0 && !isSearchingVerses && (
                      <div className="p-8 text-center opacity-70 mt-4">
                        <p className={theme === 'dark' ? 'text-white' : 'text-gray-600'}>لا توجد نتائج مطابقة لبحثك.</p>
                      </div>

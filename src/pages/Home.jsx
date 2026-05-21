@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { BookOpen, Users, Compass, ChevronLeft, Shield, Radio, Smile, Mic, Sparkles, Wind } from 'lucide-react';
+import SeasonalWidget from '../components/SeasonalWidget';
 
 const Home = () => {
   const { theme } = useAppStore();
@@ -71,6 +72,9 @@ const Home = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Seasonal Dhul-Hijjah & Arafat Widget */}
+      <SeasonalWidget />
 
       {/* Feature Cards Grid */}
       <div id="tour-features" className="w-full max-w-6xl mx-auto mt-16 px-4">

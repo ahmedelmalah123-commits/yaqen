@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../store/useAppStore';
-import { Play, Pause, ArrowRight, BookOpen, Mic2, X, SkipForward, SkipBack, Bookmark } from 'lucide-react';
+import { Play, Pause, ArrowRight, BookOpen, Mic2, X, SkipForward, SkipBack, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
 
 /* ─── Cinematic Listening Overlay ───────────────────────────────── */
 const CinematicOverlay = ({ surahData, currentIndex, isPlaying, onClose, onPlayPause, onNext, onPrev }) => {
@@ -217,10 +217,24 @@ const fetchSurahData = async ({ queryKey, signal }) => {
   }
 };
 
+const getJuzName = (num) => {
+  const juzNames = {
+    1: 'الأول', 2: 'الثاني', 3: 'الثالث', 4: 'الرابع', 5: 'الخامس',
+    6: 'السادس', 7: 'السابع', 8: 'الثامن', 9: 'التاسع', 10: 'العاشر',
+    11: 'الحادي عشر', 12: 'الثاني عشر', 13: 'الثالث عشر', 14: 'الرابع عشر', 15: 'الخامس عشر',
+    16: 'السادس عشر', 17: 'السابع عشر', 18: 'الثامن عشر', 19: 'التاسع عشر', 20: 'العشرون',
+    21: 'الحادي والعشرون', 22: 'الثاني والعشرون', 23: 'الثالث والعشرون', 24: 'الرابع والعشرون', 25: 'الخامس والعشرون',
+    26: 'السادس والعشرون', 27: 'السابع والعشرون', 28: 'الثامن والعشرون', 29: 'التاسع والعشرون', 30: 'الثلاثون'
+  };
+  return juzNames[num] || String(num);
+};
+
 const Surah = () => {
   const { id } = useParams();
+  const location = useLocation();
   const { theme, reciter, setYaqeenModeActive } = useAppStore();
-  const [showTafsir, setShowTafsir] = useState(false);
+  const [viewMode, setViewMode] = useState('mushaf'); // 'mushaf', 'continuous', 'tafsir'
+  const [selectedPage, setSelectedPage] = useState(null);
   const [showCinema, setShowCinema] = useState(false);
   const [autoPlayPending, setAutoPlayPending] = useState(false);
   
@@ -243,6 +257,21 @@ const Surah = () => {
   const surahData = data?.surahData;
   const tafsirData = data?.tafsirData;
 
+  // Group ayahs by page
+  const pages = {};
+  if (surahData && surahData.ayahs) {
+    surahData.ayahs.forEach((ayah, index) => {
+      const p = ayah.page || 1;
+      if (!pages[p]) {
+        pages[p] = [];
+      }
+      pages[p].push({ ...ayah, originalIndex: index });
+    });
+  }
+  const pageNumbers = Object.keys(pages).map(Number).sort((a, b) => a - b);
+  const activePageNum = selectedPage || pageNumbers[0] || 1;
+  const pageAyahs = pages[activePageNum] || [];
+
   useEffect(() => {
     // Cleanup audio on unmount
     const a1 = audio1Ref.current;
@@ -255,6 +284,35 @@ const Surah = () => {
       setYaqeenModeActive(false);
     };
   }, []);
+
+  useEffect(() => {
+    if (surahData && surahData.ayahs && surahData.ayahs.length > 0) {
+      setSelectedPage(surahData.ayahs[0].page);
+    }
+  }, [surahData]);
+
+  useEffect(() => {
+    if (surahData && surahData.ayahs && surahData.ayahs[currentIndex]) {
+      const activePage = surahData.ayahs[currentIndex].page;
+      if (activePage !== selectedPage && isPlaying) {
+        setSelectedPage(activePage);
+      }
+    }
+  }, [currentIndex, isPlaying, surahData]);
+
+  useEffect(() => {
+    if (surahData && location.state && typeof location.state.highlightAyahIndex === 'number') {
+      const idx = location.state.highlightAyahIndex;
+      if (idx >= 0 && idx < surahData.ayahs.length) {
+        setCurrentIndex(idx);
+        setViewMode('mushaf');
+        const activePage = surahData.ayahs[idx].page;
+        if (activePage) {
+          setSelectedPage(activePage);
+        }
+      }
+    }
+  }, [surahData, location.state]);
 
   useEffect(() => {
     if (autoPlayPending && surahData) {
@@ -445,17 +503,46 @@ const Surah = () => {
                <Play fill="currentColor" className="w-5 h-5 md:w-6 md:h-6" />
                استمع للسورة كاملة
              </button>
+             <div className="flex flex-wrap items-center justify-center gap-3 w-full md:w-auto">
+               <button 
+                 onClick={() => setViewMode('mushaf')}
+                 className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-bold text-base transition-all border hover:scale-105
+                   ${viewMode === 'mushaf'
+                     ? (theme === 'dark' ? 'bg-primary text-secondary border-primary shadow-[0_0_15px_rgba(198,156,109,0.4)]' : 'bg-secondary text-white border-secondary')
+                     : (theme === 'dark' ? 'border-primary/30 text-primary/80 hover:bg-primary/10' : 'border-secondary/20 text-secondary/70 hover:bg-secondary/5')
+                   }
+                 `}
+               >
+                 <BookOpen size={18} />
+                 وضع المصحف (صفحات)
+               </button>
 
-             <button 
-               onClick={() => setShowTafsir(!showTafsir)}
-               className={`flex items-center justify-center gap-2 md:gap-3 px-6 md:px-8 py-3 md:py-4 rounded-full font-bold text-lg md:text-xl transition-all border shadow-lg hover:scale-105 w-full md:w-auto
-                 ${theme === 'dark' ? 'border-primary/50 text-primary hover:bg-primary/10' : 'border-secondary/50 text-secondary hover:bg-secondary/10'}
-                 ${showTafsir && (theme === 'dark' ? 'bg-primary/20' : 'bg-secondary/10')}
-               `}
-             >
-               <BookOpen className={`w-5 h-5 md:w-6 md:h-6 ${showTafsir ? "fill-current" : ""}`} />
-               عرض الصفوف و التفسير
-             </button>
+               <button 
+                 onClick={() => setViewMode('continuous')}
+                 className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-bold text-base transition-all border hover:scale-105
+                   ${viewMode === 'continuous'
+                     ? (theme === 'dark' ? 'bg-primary text-secondary border-primary shadow-[0_0_15px_rgba(198,156,109,0.4)]' : 'bg-secondary text-white border-secondary')
+                     : (theme === 'dark' ? 'border-primary/30 text-primary/80 hover:bg-primary/10' : 'border-secondary/20 text-secondary/70 hover:bg-secondary/5')
+                   }
+                 `}
+               >
+                 <BookOpen size={18} className="rotate-90" />
+                 قراءة مستمرة
+               </button>
+
+               <button 
+                 onClick={() => setViewMode('tafsir')}
+                 className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-bold text-base transition-all border hover:scale-105
+                   ${viewMode === 'tafsir'
+                     ? (theme === 'dark' ? 'bg-primary text-secondary border-primary shadow-[0_0_15px_rgba(198,156,109,0.4)]' : 'bg-secondary text-white border-secondary')
+                     : (theme === 'dark' ? 'border-primary/30 text-primary/80 hover:bg-primary/10' : 'border-secondary/20 text-secondary/70 hover:bg-secondary/5')
+                   }
+                 `}
+               >
+                 <BookOpen size={18} className="fill-current" />
+                 التفسير والصفوف
+               </button>
+             </div>
           </div>
 
           {/* Explicit Reciter Switcher Rows by Group */}
@@ -504,17 +591,178 @@ const Surah = () => {
       )}
 
       {/* Content Rendering Logic */}
-      {!showTafsir ? (
+      {viewMode === 'mushaf' && (
+        <div className="flex flex-col items-center gap-6">
+          {/* Quick Page Selector */}
+          <div className="flex flex-wrap justify-center items-center gap-2 mb-4 w-full">
+            <span className={`text-sm font-bold opacity-75 ${theme === 'dark' ? 'text-primary' : 'text-secondary'}`}>الانتقال إلى الصفحة:</span>
+            <div className="flex gap-1 overflow-x-auto max-w-full py-2 px-4 no-scrollbar">
+              {pageNumbers.map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setSelectedPage(pageNum)}
+                  className={`px-3.5 py-1.5 rounded-lg text-sm font-bold transition-all border flex-shrink-0
+                    ${activePageNum === pageNum
+                      ? (theme === 'dark' ? 'bg-primary text-secondary border-primary shadow-md' : 'bg-secondary text-white border-secondary')
+                      : (theme === 'dark' ? 'border-primary/20 text-white/70 hover:border-primary' : 'border-secondary/15 text-secondary/70 hover:border-secondary')
+                    }
+                  `}
+                >
+                  {pageNum.toLocaleString('ar-EG')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Real Mushaf Page Box */}
+          <div className="relative w-full max-w-3xl">
+            {/* Left & Right page flip buttons for Desktop */}
+            <div className="absolute top-1/2 -translate-y-1/2 -left-16 z-20 hidden md:block">
+              <button
+                onClick={() => {
+                  const idx = pageNumbers.indexOf(activePageNum);
+                  if (idx > 0) setSelectedPage(pageNumbers[idx - 1]);
+                }}
+                disabled={activePageNum === pageNumbers[0]}
+                className={`p-4 rounded-full border shadow-xl transition-all disabled:opacity-30
+                  ${theme === 'dark' ? 'bg-[#064e3b]/80 border-primary/30 text-primary hover:bg-primary hover:text-secondary' : 'bg-white/80 border-secondary/20 text-secondary hover:bg-secondary hover:text-white'}
+                `}
+                title="الصفحة السابقة"
+              >
+                <ChevronLeft size={24} />
+              </button>
+            </div>
+
+            <div className="absolute top-1/2 -translate-y-1/2 -right-16 z-20 hidden md:block">
+              <button
+                onClick={() => {
+                  const idx = pageNumbers.indexOf(activePageNum);
+                  if (idx < pageNumbers.length - 1) setSelectedPage(pageNumbers[idx + 1]);
+                }}
+                disabled={activePageNum === pageNumbers[pageNumbers.length - 1]}
+                className={`p-4 rounded-full border shadow-xl transition-all disabled:opacity-30
+                  ${theme === 'dark' ? 'bg-[#064e3b]/80 border-primary/30 text-primary hover:bg-primary hover:text-secondary' : 'bg-white/80 border-secondary/20 text-secondary hover:bg-secondary hover:text-white'}
+                `}
+                title="الصفحة التالية"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </div>
+
+            {/* Gorgeous Decorative Border Page Frame */}
+            <div className={`p-1.5 md:p-3.5 rounded-[2.5rem] border-4 ${theme === 'dark' ? 'border-primary/40 bg-secondary/50 shadow-2xl' : 'border-primary/30 bg-[#FAF8F5] shadow-lg'} relative overflow-hidden transition-all duration-500`}>
+              {/* Arabesque watermark pattern */}
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-[0.04] pointer-events-none mix-blend-multiply" />
+
+              <div className={`p-5 sm:p-8 md:p-14 lg:p-16 rounded-[2.2rem] border ${theme === 'dark' ? 'border-primary/20 bg-secondary/15' : 'border-primary/10 bg-white/40'} flex flex-col justify-between min-h-[600px] relative z-10`}>
+                
+                {/* Frame Header */}
+                <div className={`flex justify-between items-center border-b pb-4 mb-8 text-xs md:text-sm font-bold font-tajawal tracking-wide
+                  ${theme === 'dark' ? 'border-primary/20 text-primary/75' : 'border-secondary/10 text-secondary/75'}
+                `}>
+                  <span>الجزء {getJuzName(pageAyahs[0]?.juz || 1)}</span>
+                  <span className="font-reem text-base md:text-lg">سورة {surahData.name}</span>
+                  <span>صفحة {activePageNum.toLocaleString('ar-EG')}</span>
+                </div>
+
+                {/* Page content containing standard inline Arabic script */}
+                <div className="text-justify leading-[2.6] md:leading-[3.3] tracking-wide font-uthmanic text-[1.8rem] md:text-[2.6rem] dir-rtl select-none" style={{ wordSpacing: '5px', textAlignLast: 'center' }}>
+                  {pageAyahs.map((ayah) => {
+                    const isCurrent = currentIndex === ayah.originalIndex;
+                    let ayahText = ayah.text;
+                    // Remove Bismillah if it's the start of the surah on page (only if it starts with Bismillah and not surah Fatihah)
+                    if (surahData.number !== 1 && ayah.numberInSurah === 1 && ayahText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
+                      ayahText = ayahText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
+                    }
+                    if (surahData.number !== 1 && ayah.numberInSurah === 1 && ayahText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
+                      ayahText = ayahText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
+                    }
+
+                    return (
+                      <span
+                        key={ayah.number}
+                        ref={isCurrent ? activeAyahRef : null}
+                        onClick={() => handlePlaySurah(ayah.originalIndex)}
+                        className={`inline cursor-pointer transition-all duration-300 mx-1 px-1 py-0.5 rounded-lg border border-transparent
+                          ${isCurrent
+                            ? (theme === 'dark'
+                                ? 'text-primary font-black bg-primary/10 border-primary/20 shadow-[0_0_12px_rgba(198,156,109,0.2)]'
+                                : 'text-secondary font-black bg-secondary/10 border-secondary/15 shadow-[0_0_8px_rgba(2,44,34,0.1)]')
+                            : (theme === 'dark' ? 'text-white hover:text-primary/95 hover:bg-primary/5' : 'text-secondary hover:text-secondary/80 hover:bg-secondary/5')
+                          }
+                        `}
+                      >
+                        {ayahText}
+                        <span className={`inline-block mx-1.5 font-bold select-none text-xl md:text-2xl whitespace-nowrap align-middle
+                          ${isCurrent ? 'text-primary scale-110' : 'opacity-55'}
+                        `}>
+                          ﴿ {ayah.numberInSurah.toLocaleString('ar-EG')} ﴾
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+
+                {/* Frame Footer */}
+                <div className={`mt-8 pt-4 border-t text-center text-sm font-bold font-tajawal
+                  ${theme === 'dark' ? 'border-primary/20 text-primary/75' : 'border-secondary/10 text-secondary/75'}
+                `}>
+                  <span className="px-4 py-1 rounded-full border border-primary/25 bg-primary/5">
+                    {activePageNum.toLocaleString('ar-EG')}
+                  </span>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Mobile-only page flip controls */}
+            <div className="flex md:hidden justify-between items-center mt-6 w-full px-4">
+              <button
+                onClick={() => {
+                  const idx = pageNumbers.indexOf(activePageNum);
+                  if (idx > 0) setSelectedPage(pageNumbers[idx - 1]);
+                }}
+                disabled={activePageNum === pageNumbers[0]}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-bold transition-all disabled:opacity-30
+                  ${theme === 'dark' ? 'bg-[#064e3b] border-primary/30 text-primary' : 'bg-white border-secondary/20 text-secondary'}
+                `}
+              >
+                <ChevronLeft size={16} />
+                السابق
+              </button>
+
+              <button
+                onClick={() => {
+                  const idx = pageNumbers.indexOf(activePageNum);
+                  if (idx < pageNumbers.length - 1) setSelectedPage(pageNumbers[idx + 1]);
+                }}
+                disabled={activePageNum === pageNumbers[pageNumbers.length - 1]}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-bold transition-all disabled:opacity-30
+                  ${theme === 'dark' ? 'bg-[#064e3b] border-primary/30 text-primary' : 'bg-white border-secondary/20 text-secondary'}
+                `}
+              >
+                التالي
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'continuous' && (
         /* --- TRUE MUSHAF INLINE LAYOUT --- */
         <div className={`p-5 sm:p-8 md:p-14 lg:p-20 rounded-[2rem] md:rounded-[3rem] min-h-[100px] text-justify leading-[2.6] md:leading-[3.5] tracking-wide glass-card transition-colors duration-500
             ${theme === 'dark' ? 'text-white' : 'text-secondary'}
         `} dir="rtl">
-          <div className="text-[1.8rem] md:text-[3rem] font-amiri leading-[2.2] md:leading-[2.6] tracking-normal right-align dir-rtl block text-justify" style={{ wordSpacing: '5px' }}>
+          <div className="text-[1.8rem] md:text-[3rem] font-uthmanic leading-[2.2] md:leading-[2.6] tracking-normal right-align dir-rtl block text-justify" style={{ wordSpacing: '5px' }}>
             {surahData.ayahs.map((ayah, index) => {
               const isCurrent = isActiveSurah && currentIndex === index;
               let ayahText = ayah.text;
               if (surahData.number !== 1 && index === 0 && ayahText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
                 ayahText = ayahText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
+              }
+              if (surahData.number !== 1 && index === 0 && ayahText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
+                ayahText = ayahText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
               }
 
               return (
@@ -540,7 +788,9 @@ const Surah = () => {
             })}
           </div>
         </div>
-      ) : (
+      )}
+
+      {viewMode === 'tafsir' && (
         /* --- AYAH ROWS EXPERIENCED LAYOUT --- */
         <div className="space-y-6 md:space-y-8">
           {surahData.ayahs.map((ayah, index) => {
@@ -550,6 +800,9 @@ const Surah = () => {
             let ayahText = ayah.text;
             if (surahData.number !== 1 && index === 0 && ayahText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
               ayahText = ayahText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
+            }
+            if (surahData.number !== 1 && index === 0 && ayahText.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ')) {
+              ayahText = ayahText.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ', '');
             }
 
             return (
@@ -570,7 +823,7 @@ const Surah = () => {
               >
                 {/* Text Block */}
                 <div className="w-full text-center md:text-right">
-                   <p className={`text-3xl md:text-[3rem] font-amiri leading-[2.2] md:leading-[2.5]
+                   <p className={`text-3xl md:text-[3rem] font-uthmanic leading-[2.2] md:leading-[2.5]
                      ${isCurrent ? (theme === 'dark' ? 'text-primary' : 'text-secondary') : (theme === 'dark' ? 'text-white' : 'text-secondary')}
                    `}>
                      {ayahText}
@@ -614,7 +867,7 @@ const Surah = () => {
 
                   {/* Tafsir (Always shown in this layout) */}
                   <div className="flex items-start gap-4 flex-1">
-                     <p className={`text-sm md:text-base leading-relaxed text-right flex-1 opacity-90
+                     <p className={`text-sm md:text-base leading-relaxed text-right flex-1 opacity-90 font-tajawal
                         ${theme === 'dark' ? 'text-white' : 'text-gray-700'}
                      `}>
                        {tafsirText}

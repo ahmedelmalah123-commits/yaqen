@@ -23,6 +23,7 @@ export default {
         reem: ["'Cairo'", "sans-serif"],
         marhey: ["'Marhey'", "cursive"],
         amiri: ["'Amiri Quran'", "'Amiri'", "serif"],
+        uthmanic: ["'UthmanicHafs'", "'Amiri Quran'", "'Amiri'", "serif"],
         playpen: ["'Playpen Sans Arabic'", "cursive"],
       },
     },

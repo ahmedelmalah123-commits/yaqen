@@ -1,10 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&family=Marhey:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Playpen+Sans+Arabic:wght@100..800&display=swap');
 
+@font-face {
+  font-family: 'UthmanicHafs';
+  src: url('https://cdn.quran.com/fonts/uthmanic_hafs_v2/UthmanicHafs2.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+
   /* ── Root fluid scale using viewport units ── */
   :root {
     --safe-top: env(safe-area-inset-top, 0px);
@@ -32,8 +42,11 @@
     /* Honor iOS notch / safe areas */
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
-    min-height: 100dvh;          /* dynamic viewport height — works on mobile */
+    min-height: 100dvh;
+    /* dynamic viewport height — works on mobile */
     overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Prevent horizontal scroll globally */
@@ -43,16 +56,23 @@
   }
 
   /* Better tap highlight on mobile */
-  button, a {
+  button,
+  a {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
 
   /* ── Premium Neon Sweeps ── */
   @keyframes goldSweep {
-    0%   { background-position: -200% center; }
-    100% { background-position:  200% center; }
+    0% {
+      background-position: -200% center;
+    }
+
+    100% {
+      background-position: 200% center;
+    }
   }
+
   .text-neon-gold {
     background: linear-gradient(110deg, #D4AF37 30%, #FFFFFF 50%, #D4AF37 70%);
     background-size: 200% auto;
@@ -64,28 +84,53 @@
 
   /* ── Logo shine ── */
   @keyframes logoShine {
-    0%   { left: -100%; opacity: 0; }
-    10%  { opacity: 1; }
-    30%  { left: 200%; opacity: 0; }
-    100% { left: 200%; opacity: 0; }
+    0% {
+      left: -100%;
+      opacity: 0;
+    }
+
+    10% {
+      opacity: 1;
+    }
+
+    30% {
+      left: 200%;
+      opacity: 0;
+    }
+
+    100% {
+      left: 200%;
+      opacity: 0;
+    }
   }
+
   .logo-neon-container {
     position: relative;
     overflow: hidden;
   }
+
   .logo-neon-container::after {
     content: '';
     position: absolute;
-    top: 0; left: -100%; width: 50%; height: 100%;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent);
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.8), transparent);
     transform: skewX(-25deg);
     animation: logoShine 4s infinite;
     z-index: 10;
   }
 
   /* ── Scrollbar hiding ── */
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
   /* ── Smooth gradient mask on nav scroll ── */
   .mask-linear-gradient {
@@ -118,15 +163,19 @@
 
   /* ── Modern Glass Card UI ── */
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300;
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 transition-all duration-300;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
   }
-  
+
   .dark .glass-card {
-    @apply bg-[#064e3b]/60 border-primary/20 shadow-[0_8px_30px_rgb(0,0,0,0.2)];
+    @apply bg-[#064e3b]/60 border-primary/20;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
   }
 
   /* ── Touch-friendly input sizing ── */
-  input, button, select {
+  input,
+  button,
+  select {
     min-height: 44px;
   }
 
@@ -140,11 +189,14 @@
 /* ── Mobile Quran Text Legibility & Tashkeel spacing (max-width: 640px) ── */
 @media (max-width: 640px) {
   .font-amiri {
-    line-height: 2.8 !important;         /* Vertical separation to prevent Tashkeel overlap */
-    letter-spacing: 0.06em !important;    /* Horizontal breathing room for letter strokes */
-    font-weight: 400 !important;          /* Elegant, lighter weight to reduce harakat boldness */
+    line-height: 2.8 !important;
+    /* Vertical separation to prevent Tashkeel overlap */
+    letter-spacing: 0.06em !important;
+    /* Horizontal breathing room for letter strokes */
+    font-weight: 400 !important;
+    /* Elegant, lighter weight to reduce harakat boldness */
     font-variation-settings: "wght" 400 !important;
-    text-shadow: none !important;         /* Remove text-shadow for absolute crispness */
+    text-shadow: none !important;
+    /* Remove text-shadow for absolute crispness */
   }
 }
-
