@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Play, Pause, RotateCcw, Heart, BookOpen, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, Play, Pause, RotateCcw, BookOpen, Quote, ChevronLeft, ChevronRight, AlertCircle, Loader2 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
 const DUA_LIST = [
@@ -24,6 +24,17 @@ const TASBIH_PHRASES = [
   "أستغفر الله العظيم وأتوب إليه"
 ];
 
+const AUDIO_SOURCES = {
+  eid: {
+    title: "تكبيرات العيد",
+    url: "https://archive.org/download/Takbirat3idAliMola/takbirat-3id-ali-mola.mp3"
+  },
+  dhulhijjah: {
+    title: "تكبيرات ذي الحجة",
+    url: "https://archive.org/download/takir-mshari/takir-mshari.mp3"
+  }
+};
+
 const SeasonalWidget = () => {
   const { theme } = useAppStore();
   const [activeTab, setActiveTab] = useState('tasbih'); // 'tasbih', 'duas', 'virtues'
@@ -31,36 +42,123 @@ const SeasonalWidget = () => {
   const [activePhraseIdx, setActivePhraseIdx] = useState(0);
   
   // Takbeerat Audio State
-  const [isPlayingTakbeer, setIsPlayingTakbeer] = useState(false);
-  const audioRef = useRef(new Audio("https://download.quranicaudio.com/takbeer/takbeerat_el_eid.mp3"));
+  const [activeAudioKey, setActiveAudioKey] = useState(null); // 'eid', 'dhulhijjah' or null
+  const [playbackStates, setPlaybackStates] = useState({
+    eid: 'idle', // 'idle' | 'loading' | 'playing' | 'paused' | 'error'
+    dhulhijjah: 'idle'
+  });
+
+  const audioRef = useRef(null);
+
+  // Initialize Audio
+  useEffect(() => {
+    const audio = new Audio();
+    audio.loop = true;
+    audioRef.current = audio;
+
+    // Add audio event listeners for robust state management
+    const handleLoadStart = () => {
+      if (activeAudioKey) {
+        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'loading' }));
+      }
+    };
+
+    const handleCanPlay = () => {
+      if (activeAudioKey && audio.paused === false) {
+        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'playing' }));
+      }
+    };
+
+    const handlePlaying = () => {
+      if (activeAudioKey) {
+        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'playing' }));
+      }
+    };
+
+    const handleWaiting = () => {
+      if (activeAudioKey) {
+        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'loading' }));
+      }
+    };
+
+    const handlePause = () => {
+      if (activeAudioKey) {
+        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'paused' }));
+      }
+    };
+
+    const handleError = () => {
+      if (activeAudioKey) {
+        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'error' }));
+      }
+    };
+
+    const handleEnded = () => {
+      if (activeAudioKey) {
+        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'idle' }));
+      }
+    };
+
+    audio.addEventListener('loadstart', handleLoadStart);
+    audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('playing', handlePlaying);
+    audio.addEventListener('waiting', handleWaiting);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('loadstart', handleLoadStart);
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('playing', handlePlaying);
+      audio.removeEventListener('waiting', handleWaiting);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [activeAudioKey]);
+
+  const handleAudioAction = (key) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (activeAudioKey === key) {
+      // Toggle play/pause for same audio
+      if (playbackStates[key] === 'playing') {
+        audio.pause();
+        setPlaybackStates(prev => ({ ...prev, [key]: 'paused' }));
+      } else {
+        setPlaybackStates(prev => ({ ...prev, [key]: 'loading' }));
+        audio.play().catch(() => {
+          setPlaybackStates(prev => ({ ...prev, [key]: 'error' }));
+        });
+      }
+    } else {
+      // Stop currently playing if any
+      audio.pause();
+      if (activeAudioKey) {
+        setPlaybackStates(prev => ({ ...prev, [activeAudioKey]: 'idle' }));
+      }
+
+      // Switch audio source
+      setActiveAudioKey(key);
+      setPlaybackStates(prev => ({ ...prev, [key]: 'loading' }));
+      audio.src = AUDIO_SOURCES[key].url;
+      audio.load();
+      audio.play().catch(() => {
+        setPlaybackStates(prev => ({ ...prev, [key]: 'error' }));
+      });
+    }
+  };
 
   // Duas Carousel State
   const [duaIdx, setDuaIdx] = useState(0);
   // Virtues Carousel State
   const [virtueIdx, setVirtueIdx] = useState(0);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    audio.loop = true;
-    return () => {
-      audio.pause();
-    };
-  }, []);
-
-  const toggleTakbeer = () => {
-    const audio = audioRef.current;
-    if (isPlayingTakbeer) {
-      audio.pause();
-      setIsPlayingTakbeer(false);
-    } else {
-      audio.play().catch(err => console.log("Audio play blocked by browser:", err));
-      setIsPlayingTakbeer(true);
-    }
-  };
-
   const handleTasbihClick = () => {
     setTasbihCount(prev => prev + 1);
-    // Haptic feedback if available on mobile browser
     if (window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(40);
     }
@@ -71,8 +169,47 @@ const SeasonalWidget = () => {
     setTasbihCount(0);
   };
 
+  const renderAudioButton = (key) => {
+    const state = playbackStates[key];
+    const source = AUDIO_SOURCES[key];
+
+    let icon = <Play size={18} fill="currentColor" />;
+    let statusText = `تشغيل ${source.title}`;
+
+    if (state === 'loading') {
+      icon = <Loader2 size={18} className="animate-spin" />;
+      statusText = "جاري التحميل...";
+    } else if (state === 'playing') {
+      icon = <Pause size={18} fill="currentColor" />;
+      statusText = `إيقاف ${source.title}`;
+    } else if (state === 'paused') {
+      icon = <Play size={18} fill="currentColor" />;
+      statusText = `استئناف ${source.title}`;
+    } else if (state === 'error') {
+      icon = <AlertCircle size={18} />;
+      statusText = "فشل تحميل الصوت";
+    }
+
+    return (
+      <button
+        onClick={() => handleAudioAction(key)}
+        className={`flex items-center gap-3 px-6 py-3.5 rounded-full font-bold text-sm md:text-base transition-all duration-300 hover:scale-105 shadow-md border
+          ${state === 'playing'
+            ? (theme === 'dark' ? 'bg-primary text-secondary border-transparent' : 'bg-secondary text-white border-transparent')
+            : state === 'error'
+            ? 'bg-red-500/10 text-red-500 border-red-500/35'
+            : (theme === 'dark' ? 'bg-[#064e3b] text-primary border-primary/30' : 'bg-white text-secondary border-secondary/20')
+          }
+        `}
+      >
+        {icon}
+        <span>{statusText}</span>
+      </button>
+    );
+  };
+
   return (
-    <div className={`w-full max-w-6xl mx-auto mt-16 px-4`} dir="rtl">
+    <div className="w-full max-w-6xl mx-auto mt-16 px-4" dir="rtl">
       <div className={`relative overflow-hidden rounded-[2.5rem] p-8 md:p-12 border transition-all duration-500
         ${theme === 'dark' 
           ? 'bg-gradient-to-br from-[#022c22]/90 to-[#043e2f]/80 border-primary/30 shadow-[0_0_40px_rgba(2,44,34,0.3)]' 
@@ -82,8 +219,8 @@ const SeasonalWidget = () => {
         {/* Background watermark */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-[0.04] mix-blend-multiply pointer-events-none" />
 
-        {/* Header Header */}
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6 border-b border-dashed pb-8 mb-8 border-primary/20">
+        {/* Header Section */}
+        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-8 border-b border-dashed pb-8 mb-8 border-primary/20">
           <div className="flex items-center gap-4 text-center md:text-right">
             <div className={`p-4 rounded-2xl flex-shrink-0 animate-pulse
               ${theme === 'dark' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}
@@ -92,7 +229,7 @@ const SeasonalWidget = () => {
             </div>
             <div>
               <h2 className={`text-2xl md:text-3xl font-black font-reem ${theme === 'dark' ? 'text-primary' : 'text-secondary'}`}>
-                بوابة عشر ذي الحجة ويوم عرفة الموسمية 🕋🌙
+                بوابة عشر ذي الحجة ويوم عرفة الموسمية
               </h2>
               <p className={`text-sm md:text-md font-tajawal opacity-75 mt-1 ${theme === 'dark' ? 'text-white' : 'text-secondary'}`}>
                 اغتنم أعظم أيام الدنيا بالتكبير، والذكر، والدعاء المأثور.
@@ -100,19 +237,11 @@ const SeasonalWidget = () => {
             </div>
           </div>
 
-          {/* Takbeerat Audio Controller */}
-          <button
-            onClick={toggleTakbeer}
-            className={`flex items-center gap-3 px-6 py-3 rounded-full font-bold text-sm md:text-base transition-all duration-300 hover:scale-105 shadow-md
-              ${isPlayingTakbeer 
-                ? (theme === 'dark' ? 'bg-primary text-secondary' : 'bg-secondary text-white')
-                : (theme === 'dark' ? 'bg-[#064e3b] text-primary border border-primary/30' : 'bg-white text-secondary border border-secondary/20')
-              }
-            `}
-          >
-            {isPlayingTakbeer ? <Pause size={18} fill="currentColor" className="animate-spin" /> : <Play size={18} fill="currentColor" />}
-            <span>{isPlayingTakbeer ? 'إيقاف تكبيرات العيد' : 'تشغيل تكبيرات العيد 🎧'}</span>
-          </button>
+          {/* Dual Takbeerat Audio Controllers */}
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto justify-center items-center">
+            {renderAudioButton('eid')}
+            {renderAudioButton('dhulhijjah')}
+          </div>
         </div>
 
         {/* Switcher Navigation */}
@@ -127,7 +256,7 @@ const SeasonalWidget = () => {
                 }
               `}
             >
-              المسبحة الإلكترونية 📿
+              المسبحة الإلكترونية
             </button>
             
             <button
@@ -139,7 +268,7 @@ const SeasonalWidget = () => {
                 }
               `}
             >
-              أدعية عرفات 🤲
+              أدعية عرفات
             </button>
 
             <button
@@ -151,7 +280,7 @@ const SeasonalWidget = () => {
                 }
               `}
             >
-              فضائل العشر 📖
+              فضائل العشر
             </button>
           </div>
         </div>
@@ -195,8 +324,8 @@ const SeasonalWidget = () => {
                   "{TASBIH_PHRASES[activePhraseIdx]}"
                 </div>
 
-                {/* Major Rosary Circular Button */}
-                <div className="flex flex-col items-center gap-3">
+                {/* Rosary Counter circular button */}
+                <div className="flex flex-col items-center gap-6 w-full">
                   <motion.div
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.95 }}
@@ -208,24 +337,26 @@ const SeasonalWidget = () => {
                       }
                     `}
                   >
-                    {/* Ring highlight element */}
                     <div className="absolute inset-2 rounded-full border border-dashed border-primary/20 group-hover:border-primary/40 transition-colors" />
 
-                    <span className="text-xs opacity-60 font-tajawal font-bold uppercase tracking-wider">الـتـكـبـيـرات</span>
+                    <span className="text-xs opacity-60 font-tajawal font-bold uppercase tracking-wider">التكبيرات</span>
                     <span className="text-5xl font-black font-tajawal my-1">{tasbihCount.toLocaleString('ar-EG')}</span>
                     <span className="text-xs opacity-60 font-tajawal">اضغط للذكر</span>
-                    
-                    {/* Floating mini-button to reset */}
-                    <button
-                      onClick={handleResetTasbih}
-                      className={`absolute bottom-3 p-2 rounded-full border transition-all hover:scale-110 shadow-md
-                        ${theme === 'dark' ? 'bg-secondary border-primary/20 text-primary hover:text-white' : 'bg-white border-secondary/20 text-secondary hover:text-black'}
-                      `}
-                      title="إعادة التصفير"
-                    >
-                      <RotateCcw size={14} />
-                    </button>
                   </motion.div>
+
+                  {/* Reset button positioned BELOW the circle counter */}
+                  <button
+                    onClick={handleResetTasbih}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all hover:scale-105 shadow-md font-bold text-xs
+                      ${theme === 'dark' 
+                        ? 'bg-[#064e3b] border-primary/35 text-primary hover:bg-primary hover:text-secondary' 
+                        : 'bg-white border-secondary/20 text-secondary hover:bg-secondary hover:text-white'
+                      }
+                    `}
+                  >
+                    <RotateCcw size={14} />
+                    <span>إعادة الضبط</span>
+                  </button>
                 </div>
               </motion.div>
             )}

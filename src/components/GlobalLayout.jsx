@@ -29,7 +29,7 @@ const GlobalLayout = ({ children }) => {
     <div className={`min-h-[100dvh] font-tajawal transition-colors duration-700 flex flex-col relative overflow-x-hidden`}>
       {!isFullscreen && <Navbar />}
 
-      <main className={`flex-1 relative w-full ${!isFullscreen ? 'page-bottom-pad pt-2 md:pt-4' : ''}`}>
+      <main className={`flex-1 relative w-full ${!isFullscreen ? 'page-bottom-pad pt-24 md:pt-36' : ''}`}>
         {/* Static arabesque grain overlay */}
         <div
           className="fixed inset-0 pointer-events-none mix-blend-overlay opacity-5 z-0"
