@@ -27,11 +27,11 @@ const TASBIH_PHRASES = [
 const AUDIO_SOURCES = {
   eid: {
     title: "تكبيرات العيد",
-    url: "https://archive.org/download/Takbirat3idAliMola/takbirat-3id-ali-mola.mp3"
+    url: "/audio/takbeerat-eid.mp3"
   },
   dhulhijjah: {
     title: "تكبيرات ذي الحجة",
-    url: "https://archive.org/download/takir-mshari/takir-mshari.mp3"
+    url: "/audio/takbeerat-dhulhijjah.mp3"
   }
 };
 
