@@ -116,13 +116,18 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     setIsLoading(true);
     setApiError(null);
 
+    // Filter welcome message to avoid Gemini 400 Bad Request alternating history error
+    const activeHistory = messages
+      .filter(msg => msg.id !== 'welcome')
+      .map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }]
+      }));
+
     // Prepare payload (history format suitable for most serverless pipelines)
     const payload = {
       message: textToSend,
-      history: messages.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }]
-      }))
+      history: activeHistory
     };
 
     try {
@@ -162,12 +167,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           systemInstruction: BRAND_SYSTEM_INSTRUCTION
         });
 
-        // Convert the messages log into standard Gemini content format
+        // Start chat session with alternating history (welcome message filtered out)
         const chatSession = model.startChat({
-          history: messages.map(msg => ({
-            role: msg.sender === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.text }]
-          }))
+          history: activeHistory
         });
 
         const result = await chatSession.sendMessage(textToSend);
@@ -232,7 +234,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
   return (
     <div className={`fixed z-50 font-tajawal ${positionClasses} flex flex-col items-end`}>
-      {/* ── Chat Window (Floating Glass Panel) ── */}
+      {/* ── Chat Window (Floating Glass Panel - Refined Compact Size) ── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -240,69 +242,69 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="w-[90vw] sm:w-[400px] h-[520px] sm:h-[600px] rounded-2xl overflow-hidden glass-card flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-white/20 dark:border-primary/20 backdrop-blur-xl mb-4 relative z-50"
+            className="w-[320px] sm:w-[350px] h-[450px] sm:h-[480px] rounded-2xl overflow-hidden glass-card flex flex-col shadow-[0_15px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_15px_40px_rgba(0,0,0,0.35)] border border-white/20 dark:border-primary/20 backdrop-blur-xl mb-3 relative z-50"
             style={{ direction: 'rtl' }}
           >
-            {/* Header (Premium Glass Header with Gold Accents) */}
-            <div className="px-5 py-4 bg-gradient-to-r from-secondary/80 to-[#044e3d]/80 border-b border-primary/20 flex items-center justify-between backdrop-blur-lg">
-              <div className="flex items-center gap-3">
+            {/* Header (Premium Glass Header with Gold Accents - Compact) */}
+            <div className="px-4 py-3 bg-gradient-to-r from-secondary/85 to-[#044e3d]/85 border-b border-primary/20 flex items-center justify-between backdrop-blur-lg">
+              <div className="flex items-center gap-2.5">
                 <div className="relative">
                   {/* Premium circular frame for Amm Baraka's cartoon face */}
-                  <div className="w-11 h-11 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center overflow-hidden shadow-inner">
+                  <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center overflow-hidden shadow-inner">
                     <img 
                       src="/amm-baraka.png" 
                       alt="الشيخ عم بركة" 
                       className="w-full h-full object-cover object-top scale-110" 
                     />
                   </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-secondary rounded-full animate-pulse"></span>
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-secondary rounded-full animate-pulse"></span>
                 </div>
                 
                 <div>
-                  <h3 className="text-white font-bold text-sm sm:text-base tracking-wide flex items-center gap-1.5">
+                  <h3 className="text-white font-bold text-xs sm:text-sm tracking-wide flex items-center gap-1.5">
                     الشيخ عم بركة
-                    <Sparkles className="w-3.5 h-3.5 text-accent fill-accent/20" />
+                    <Sparkles className="w-3 h-3 text-accent fill-accent/20" />
                   </h3>
-                  <p className="text-xs text-white/70 font-medium">المرشد الروحي والتعليمي لمنصة يقين</p>
+                  <p className="text-[10px] text-white/70 font-medium">المرشد الروحي والتعليمي لمنصة يقين</p>
                 </div>
               </div>
 
               {/* Header Action Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={clearChatHistory}
                   title="تفريغ المحادثة"
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-red-400 hover:bg-white/10 transition-colors duration-200"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white/70 hover:text-red-400 hover:bg-white/10 transition-colors duration-200"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   title="إغلاق"
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors duration-200"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors duration-200"
                 >
-                  <X className="w-4.5 h-4.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Error Notification Bar */}
             {apiError && (
-              <div className="bg-red-500/10 border-b border-red-500/20 px-4 py-2.5 flex items-center gap-2 text-xs text-red-600 dark:text-red-300 font-bold">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="bg-red-500/10 border-b border-red-500/20 px-3 py-2 flex items-center gap-1.5 text-[11px] text-red-600 dark:text-red-300 font-bold">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{apiError}</span>
               </div>
             )}
 
-            {/* Chat Body (Message Log Area) */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-slate-50/20 dark:bg-emerald-950/10">
+            {/* Chat Body (Message Log Area - Compact Padding) */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 no-scrollbar bg-slate-50/20 dark:bg-emerald-950/10">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm sm:text-base leading-relaxed shadow-sm transition-all ${
+                    className={`max-w-[85%] rounded-xl px-3 py-2 text-[13px] sm:text-[14px] leading-relaxed shadow-sm transition-all ${
                       msg.sender === 'user'
                         ? 'bg-primary/20 dark:bg-primary/10 text-emerald-950 dark:text-white border border-primary/30 rounded-br-none font-semibold'
                         : 'bg-white/90 dark:bg-white/10 text-emerald-950 dark:text-emerald-50 border border-white/20 dark:border-white/10 rounded-bl-none font-medium'
@@ -313,7 +315,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                       {msg.text}
                     </div>
                     {/* Timestamp */}
-                    <span className={`block text-[10px] mt-1 text-left ${
+                    <span className={`block text-[9px] mt-1 text-left ${
                       msg.sender === 'user' ? 'text-emerald-900/60 dark:text-white/40' : 'text-slate-500 dark:text-slate-400'
                     }`}>
                       {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -325,30 +327,30 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
               {/* Dynamic Typing Indicator (when loading Gemini response) */}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-white/85 dark:bg-white/10 text-emerald-950 dark:text-emerald-50 border border-white/20 dark:border-white/10 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm flex items-center gap-2">
-                    <span className="text-xs font-semibold text-emerald-800 dark:text-primary animate-pulse">الشيخ عم بركة يتفكر...</span>
+                  <div className="bg-white/85 dark:bg-white/10 text-emerald-950 dark:text-emerald-50 border border-white/20 dark:border-white/10 rounded-xl rounded-bl-none px-3 py-2 shadow-sm flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-emerald-800 dark:text-primary animate-pulse">الشيخ عم بركة يتفكر...</span>
                     <div className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                      <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                      <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Empty state suggested prompt chips */}
+              {/* Empty state suggested prompt chips - Compact Sizing */}
               {messages.length === 1 && !isLoading && (
-                <div className="pt-4 space-y-2">
-                  <p className="text-xs text-slate-500 dark:text-primary/60 font-semibold px-1 flex items-center gap-1.5">
-                    <HelpCircle className="w-3.5 h-3.5 text-primary" />
+                <div className="pt-2 space-y-1.5">
+                  <p className="text-[10px] text-slate-500 dark:text-primary/60 font-semibold px-1 flex items-center gap-1">
+                    <HelpCircle className="w-3 h-3 text-primary" />
                     أسئلة شائعة يمكنك طرحها:
                   </p>
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 gap-1.5">
                     {SUGGESTED_PROMPTS.map((prompt, index) => (
                       <button
                         key={index}
                         onClick={() => handleSendMessage(prompt)}
-                        className="w-full text-right text-xs p-2.5 rounded-xl border border-primary/20 bg-white/40 dark:bg-white/5 hover:bg-primary/10 dark:hover:bg-primary/10 hover:border-primary/50 text-emerald-950 dark:text-emerald-100 hover:text-primary dark:hover:text-primary transition-all duration-200 font-semibold"
+                        className="w-full text-right text-[11px] p-2 rounded-lg border border-primary/20 bg-white/40 dark:bg-white/5 hover:bg-primary/10 dark:hover:bg-primary/10 hover:border-primary/50 text-emerald-950 dark:text-emerald-100 hover:text-primary dark:hover:text-primary transition-all duration-200 font-semibold"
                       >
                         {prompt}
                       </button>
@@ -360,8 +362,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Bar Section */}
-            <div className="p-3 bg-white/40 dark:bg-emerald-950/30 border-t border-white/10 dark:border-primary/10 flex items-end gap-2 backdrop-blur-md">
+            {/* Input Bar Section - Compact */}
+            <div className="p-2.5 bg-white/40 dark:bg-emerald-950/30 border-t border-white/10 dark:border-primary/10 flex items-end gap-2 backdrop-blur-md">
               <textarea
                 ref={inputRef}
                 value={inputValue}
@@ -369,33 +371,33 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                 onKeyDown={handleKeyDown}
                 placeholder="اسأل عم بركة..."
                 rows={1}
-                className="flex-1 max-h-24 min-h-[44px] py-2 px-3.5 rounded-xl bg-white/80 dark:bg-emerald-950/80 border border-slate-200 dark:border-primary/20 text-emerald-950 dark:text-white placeholder-slate-400 dark:placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-300 resize-none font-semibold"
+                className="flex-1 max-h-20 min-h-[38px] py-1.5 px-3 rounded-lg bg-white/80 dark:bg-emerald-950/80 border border-slate-200 dark:border-primary/20 text-emerald-950 dark:text-white placeholder-slate-400 dark:placeholder-white/40 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-300 resize-none font-semibold"
               />
               
               <button
                 onClick={() => handleSendMessage(inputValue)}
                 disabled={isLoading || !inputValue.trim()}
                 title="إرسال"
-                className={`w-11 h-11 shrink-0 rounded-xl flex items-center justify-center transition-all duration-300 shadow-md ${
+                className={`w-9.5 h-9.5 shrink-0 rounded-lg flex items-center justify-center transition-all duration-300 shadow-md ${
                   inputValue.trim() && !isLoading
                     ? 'bg-primary hover:bg-accent text-white scale-100 active:scale-95 cursor-pointer shadow-primary/20'
                     : 'bg-slate-200 dark:bg-emerald-950 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none'
                 }`}
               >
                 {/* Mirroring standard send icon for RTL text flow alignment */}
-                <Send className="w-5 h-5 scale-x-[-1]" />
+                <Send className="w-4 h-4 scale-x-[-1]" />
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Trigger Floating Button (Custom Grandfather Face Avatar) ── */}
+      {/* ── Trigger Floating Button (Custom Grandfather Face Avatar - Clean Size) ── */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
-        className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-accent text-white flex items-center justify-center shadow-[0_8px_30px_rgba(198,156,109,0.35)] dark:shadow-[0_8px_30px_rgba(198,156,109,0.2)] border border-primary/40 focus:outline-none relative group overflow-hidden"
+        className="w-14 h-14 rounded-full bg-gradient-to-r from-primary to-accent text-white flex items-center justify-center shadow-[0_8px_30px_rgba(198,156,109,0.35)] dark:shadow-[0_8px_30px_rgba(198,156,109,0.2)] border border-primary/40 focus:outline-none relative group overflow-hidden"
         title="اسأل عم بركة"
       >
         <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping group-hover:animate-none scale-105 opacity-75"></span>
@@ -425,7 +427,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                 className="w-full h-full object-cover object-top scale-115" 
               />
               <span className="absolute -top-1 -right-1 bg-yellow-400 text-slate-900 rounded-full p-0.5 shadow-md">
-                <Sparkles className="w-3.5 h-3.5 animate-bounce fill-slate-900 text-slate-900" />
+                <Sparkles className="w-3 h-3 animate-bounce fill-slate-900 text-slate-900" />
               </span>
             </motion.div>
           )}

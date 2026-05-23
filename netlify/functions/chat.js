@@ -45,9 +45,15 @@ export async function handler(event) {
       systemInstruction: BRAND_SYSTEM_INSTRUCTION
     });
 
+    // Filter out welcome message or any non-alternating messages to prevent Gemini API error
+    const cleanHistory = (history || []).filter(msg => {
+      const text = msg.parts?.[0]?.text || "";
+      return !text.includes("مرحباً بك") && !text.includes("الشيخ عم بركة");
+    });
+
     // Start a chat session with the historical message log passed from the frontend widget
     const chat = model.startChat({
-      history: history || []
+      history: cleanHistory
     });
 
     const result = await chat.sendMessage(message);
