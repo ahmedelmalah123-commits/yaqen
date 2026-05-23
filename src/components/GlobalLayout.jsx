@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import ChatWidget from './ChatWidget';
 import { useAppStore } from '../store/useAppStore';
 
 const GlobalLayout = ({ children }) => {
@@ -79,6 +80,9 @@ const GlobalLayout = ({ children }) => {
           <Footer />
         </div>
       )}
+
+      {/* Globally floating AI chat agent */}
+      <ChatWidget />
     </div>
   );
 };
