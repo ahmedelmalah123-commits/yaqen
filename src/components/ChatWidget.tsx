@@ -53,9 +53,9 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
-  apiKey = ((import.meta as any).env.VITE_GEMINI_API_KEY || '').startsWith('AIza')
-    ? (import.meta as any).env.VITE_GEMINI_API_KEY
-    : 'AIzaSyAdI7OrY0oes-nTlAy9_i3QwddUgMROGlg',
+  apiKey = ((import.meta as any).env.VITE_GEMINI_API_KEY || 'AIzaSyBGh3bVMcte_LPuDjp5CoqlcjkZT8ECk68').startsWith('AIza')
+    ? ((import.meta as any).env.VITE_GEMINI_API_KEY || 'AIzaSyBGh3bVMcte_LPuDjp5CoqlcjkZT8ECk68')
+    : 'AIzaSyBGh3bVMcte_LPuDjp5CoqlcjkZT8ECk68',
   apiEndpoint = '/api/chat',
   position = 'bottom-left'
 }) => {

@@ -37,7 +37,7 @@ export async function handler(event) {
     }
 
     // Retrieve API key from environment variables
-    const apiKey = process.env.VITE_GEMINI_API_KEY || 'AIzaSyAdI7OrY0oes-nTlAy9_i3QwddUgMROGlg';
+    const apiKey = process.env.VITE_GEMINI_API_KEY || 'AIzaSyBGh3bVMcte_LPuDjp5CoqlcjkZT8ECk68';
     const genAI = new GoogleGenerativeAI(apiKey);
     
     const model = genAI.getGenerativeModel({
