@@ -53,7 +53,9 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
-  apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || 'AIzaSyAdI7OrY0oes-nTlAy9_i3QwddUgMROGlg',
+  apiKey = ((import.meta as any).env.VITE_GEMINI_API_KEY || '').startsWith('AIza')
+    ? (import.meta as any).env.VITE_GEMINI_API_KEY
+    : 'AIzaSyAdI7OrY0oes-nTlAy9_i3QwddUgMROGlg',
   apiEndpoint = '/api/chat',
   position = 'bottom-left'
 }) => {
@@ -178,7 +180,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-2.0-flash',
           systemInstruction: BRAND_SYSTEM_INSTRUCTION
         });
 
@@ -439,7 +441,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
               <img 
                 src="/amm-baraka.png" 
                 alt="عم بركة" 
-                className="w-full h-full object-cover object-top scale-115" 
+                className="w-full h-full object-cover object-center"
+                style={{ transform: 'scale(1.15)' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
               <span className="absolute -top-1 -right-1 bg-yellow-400 text-slate-900 rounded-full p-0.5 shadow-md">
                 <Sparkles className="w-3 h-3 animate-bounce fill-slate-900 text-slate-900" />
