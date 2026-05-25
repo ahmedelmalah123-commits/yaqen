@@ -141,7 +141,25 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error(`Endpoint returned status ${response.status}`);
+        let serverError: any = null;
+        try {
+          serverError = await response.json();
+        } catch (jsonErr) {
+          try {
+            serverError = await response.text();
+          } catch (textErr) {
+            serverError = `Unknown server error with status code: ${response.status}`;
+          }
+        }
+        
+        // Print the exact backend error to the browser console
+        console.error("Backend Error Object:", serverError);
+        
+        throw new Error(
+          typeof serverError === 'object' && serverError?.error
+            ? serverError.error
+            : `Endpoint returned status ${response.status}`
+        );
       }
 
       const data = await response.json();
@@ -152,8 +170,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       }
 
       appendAiResponse(aiResponseText);
-    } catch (error) {
-      console.warn("Serverless endpoint failed or is not configured. Falling back to direct client-side Gemini API...");
+    } catch (error: any) {
+      console.warn("Serverless endpoint failed or is not configured. Falling back to direct client-side Gemini API...", error.message || error);
       
       // 2. Graceful Fallback: Direct client-side call to Google Gemini
       try {

@@ -18,6 +18,9 @@ const BRAND_SYSTEM_INSTRUCTION = `[الدور والهوية]
 "عذراً أخي/أختي الكريم(ة)، بصفتي 'الشيخ عم بركة'، دوري يقتصر على إرشادك داخل منصة 'يقين' ومساعدتك في المحتوى الإسلامي والتعليمي المتاح لدينا فقط. كيف يمكنني خدمتك في هذا المجال؟"`;
 
 export async function handler(event) {
+  // Add explicit console.log check to verify VITE_GEMINI_API_KEY definition status (DO NOT log the key itself)
+  console.log("Checking VITE_GEMINI_API_KEY definition status:", process.env.VITE_GEMINI_API_KEY ? "DEFINED (true)" : "UNDEFINED (false)");
+
   // Only allow POST requests
   if (event.httpMethod !== "POST") {
     return {
@@ -68,10 +71,19 @@ export async function handler(event) {
       body: JSON.stringify({ text: responseText }),
     };
   } catch (error) {
-    console.error("Netlify Serverless Function Error:", error);
+    // Log the full error stack details
+    console.error("Gemini API Error Detail:", error);
+    
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal Server Error", details: error.message }),
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ 
+        error: error.message, 
+        phase: "gemini-api-call" 
+      }),
     };
   }
 }
