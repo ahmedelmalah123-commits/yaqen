@@ -37,11 +37,14 @@ export async function handler(event) {
     }
 
     // Retrieve API key from environment variables
-    const apiKey = process.env.VITE_GEMINI_API_KEY || 'AIzaSyBGh3bVMcte_LPuDjp5CoqlcjkZT8ECk68';
+    const apiKey = process.env.VITE_GEMINI_API_KEY || '';
+    if (!apiKey) {
+      throw new Error("VITE_GEMINI_API_KEY is not defined in the environment variables");
+    }
     const genAI = new GoogleGenerativeAI(apiKey);
     
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-3.5-flash",
       systemInstruction: BRAND_SYSTEM_INSTRUCTION
     });
 

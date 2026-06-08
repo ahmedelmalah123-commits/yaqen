@@ -9,6 +9,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getAmmBarakaFallback } from '../lib/ammBarakaFallback';
 
 // ── TypeScript Interfaces ──
 
@@ -53,9 +54,7 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
-  apiKey = ((import.meta as any).env.VITE_GEMINI_API_KEY || 'AIzaSyBGh3bVMcte_LPuDjp5CoqlcjkZT8ECk68').startsWith('AIza')
-    ? ((import.meta as any).env.VITE_GEMINI_API_KEY || 'AIzaSyBGh3bVMcte_LPuDjp5CoqlcjkZT8ECk68')
-    : 'AIzaSyBGh3bVMcte_LPuDjp5CoqlcjkZT8ECk68',
+  apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || '',
   apiEndpoint = '/api/chat',
   position = 'bottom-left'
 }) => {
@@ -180,7 +179,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-3.5-flash',
           systemInstruction: BRAND_SYSTEM_INSTRUCTION
         });
 
@@ -201,11 +200,16 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       } catch (fallbackError: any) {
         console.error("Direct Gemini API fallback also failed:", fallbackError);
         
-        // Custom error message when Amm Baraka is offline/busy
-        setApiError("عم بركة بيصلي دلوقتي، تعالى بعدين");
+        // Retrieve smart fallback response in Amm Baraka's character
+        const fallbackText = getAmmBarakaFallback(textToSend);
+        appendAiResponse(fallbackText);
         
-        // Add a friendly offline warning message from Amm Baraka
-        appendAiResponse("يا ولدي، عم بركة بيصلي دلوقتي، تعالى بعدين إن شاء الله.");
+        // Set API Error banner to inform developer (if in dev mode)
+        if ((import.meta as any).env.DEV) {
+          setApiError("تنبيه المطور: مفتاح Gemini API منتهي الصلاحية أو غير صالح. جاري استخدام الرد المحلي التلقائي.");
+        } else {
+          setApiError("الاتصال ضعيف حالياً، يعمل الشيخ بالوضع المحلي.");
+        }
       }
     } finally {
       setIsLoading(false);
