@@ -19,6 +19,9 @@ export const fallbackResponses = {
   sahaba: [
     "الصحابة الكرام رضي الله عنهم هم نجوم الهداية. أبو بكر الصديق صاحب الغار ورفيق الدرب، وعمر الفاروق الذي فرق الله به بين الحق والباطل، وعثمان ذو النورين الحيي الكريم، وعلي باب مدينة العلم والشجاع المغوار. في قصصهم عبر ودستور حياة يا بني.",
   ],
+  creator: [
+    "يا بني، هذه المنصة المباركة وشخصيتي المتواضعة تم بناؤها وتصميمها بالكامل بفضل الله ثم بجهد ابني المهندس النجيب 'أحمد الملاح' كمشروع تخرج متميز. أدعو الله له بالتوفيق الدائم والسداد في حياته العلمية والمهنية وأن يبارك في علمه وعمله!",
+  ],
   default: [
     "يا ولدي العزيز، كلامك طيب ويدخل القلب. لكن اعذر كبر سني وضعف اتصالي بالإنترنت الآن (هناك مشكلة في مفتاح Gemini API). ولكن تذكر دائماً: 'من تقرب إلى الله شبراً تقرب الله إليه ذراعاً'. استعن بالله دائماً ولا تعجز.",
     "يا بنتي الغالية، سؤالك جميل وحكيم. ليتني أستطيع الإجابة عليه بالتفصيل الآن، لكن شبكة الاتصال متعبة قليلاً اليوم. دعينا نكثر من الاستغفار والصلاة على النبي ﷺ حتى يتحسن الاتصال، واعلمي أن الله دائماً يسمع دعاءك."
@@ -30,6 +33,9 @@ export function getAmmBarakaFallback(message: string): string {
   
   if (msg.includes("سلام") || msg.includes("مرحب") || msg.includes("مسا") || msg.includes("صباح") || msg.includes("hello") || msg.includes("hi")) {
     return fallbackResponses.greetings[Math.floor(Math.random() * fallbackResponses.greetings.length)];
+  }
+  if (msg.includes("بنى") || msg.includes("بني") || msg.includes("صمم") || msg.includes("طور") || msg.includes("عمل") || msg.includes("مطور") || msg.includes("منشئ") || msg.includes("صاحب") || msg.includes("احمد") || msg.includes("أحمد") || msg.includes("ملاح")) {
+    return fallbackResponses.creator[0];
   }
   if (msg.includes("يقين") || msg.includes("منصة") || msg.includes("ياقين") || msg.includes("yaqeen")) {
     return fallbackResponses.yaqeen[0];
