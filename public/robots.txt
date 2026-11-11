@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://yaaqeen.netlify.app/sitemap.xml

@@ -1,0 +1,14 @@
+{
+  "name": "يقين — معرفة تُثمر يقيناً",
+  "short_name": "يقين",
+  "description": "منصة تعليمية إسلامية",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d3d2b",
+  "theme_color": "#0d3d2b",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

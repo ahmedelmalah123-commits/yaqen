@@ -1,0 +1,6 @@
+{
+  "appId": "com.yaqeen.app",
+  "appName": "Yaqeen",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
