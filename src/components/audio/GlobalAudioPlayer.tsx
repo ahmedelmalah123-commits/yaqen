@@ -18,6 +18,11 @@ import {
   Radio as RadioIcon,
   Trash2,
   RotateCcw,
+  Car,
+  HardDrive,
+  Activity,
+  ExternalLink,
+  Wifi,
 } from 'lucide-react';
 import {
   useAudioStore,
@@ -48,9 +53,10 @@ export const GlobalAudioPlayer: React.FC = () => {
   const repeatMode = useAudioStore((s) => s.repeatMode);
   const sleepTimerEndsAt = useAudioStore((s) => s.sleepTimerEndsAt);
   const selectedSleepMinutes = useAudioStore((s) => s.selectedSleepMinutes);
-  const pendingRestoreTime = useAudioStore((s) => s.pendingRestoreTime);
+  const sleepTimerEndOfSurah = useAudioStore((s) => s.sleepTimerEndOfSurah);
   const isExpanded = useAudioStore((s) => s.isExpanded);
   const queue = useAudioStore((s) => s.queue);
+  const lowDataMode = useAudioStore((s) => s.lowDataMode);
 
   const togglePlayPause = useAudioStore((s) => s.togglePlayPause);
   const stop = useAudioStore((s) => s.stop);
@@ -62,9 +68,16 @@ export const GlobalAudioPlayer: React.FC = () => {
   const setPlaybackRate = useAudioStore((s) => s.setPlaybackRate);
   const cycleRepeatMode = useAudioStore((s) => s.cycleRepeatMode);
   const setSleepTimerMinutes = useAudioStore((s) => s.setSleepTimerMinutes);
+  const setSleepTimerEndOfSurah = useAudioStore((s) => s.setSleepTimerEndOfSurah);
   const setExpanded = useAudioStore((s) => s.setExpanded);
   const removeQueueItem = useAudioStore((s) => s.removeQueueItem);
   const clearQueue = useAudioStore((s) => s.clearQueue);
+  const setCarModeOpen = useAudioStore((s) => s.setCarModeOpen);
+  const setOfflineDrawerOpen = useAudioStore((s) => s.setOfflineDrawerOpen);
+  const setQueueDrawerOpen = useAudioStore((s) => s.setQueueDrawerOpen);
+  const setDiagnosticsOpen = useAudioStore((s) => s.setDiagnosticsOpen);
+  const setMiniPlayerOpen = useAudioStore((s) => s.setMiniPlayerOpen);
+  const toggleLowDataMode = useAudioStore((s) => s.toggleLowDataMode);
 
   const [sleepRemainingMin, setSleepRemainingMin] = useState<number | null>(null);
 
@@ -98,55 +111,32 @@ export const GlobalAudioPlayer: React.FC = () => {
   if (source.kind === 'surah-stream') {
     primaryTitle =
       source.clipAyahNumber !== undefined
-        ? `سورة ${stripSurahPrefix(source.surahName)} · آية ${toArabicDigits(source.clipAyahNumber)}`
+        ? `سورة ${stripSurahPrefix(source.surahName)} — آية ${toArabicDigits(source.clipAyahNumber)}`
         : `سورة ${stripSurahPrefix(source.surahName)}`;
-    secondaryTitle =
-      source.clipAyahNumber !== undefined
-        ? `${source.reciterName} · مقطع من التلاوة الكاملة`
-        : `${source.reciterName} · تلاوة كاملة`;
-    linkTo =
-      source.clipAyahNumber !== undefined
-        ? `/surah/${source.surahNumber}?ayah=${source.clipAyahNumber}`
-        : `/surah/${source.surahNumber}`;
+    secondaryTitle = `القارئ ${source.reciterName}`;
+    linkTo = `/surah/${source.surahNumber}`;
   } else if (source.kind === 'radio') {
     primaryTitle = source.stationName;
-    secondaryTitle = `بث مباشر · ${source.stationType}`;
-    linkTo = `/radio?station=${source.stationId}`;
+    secondaryTitle = `إذاعة ${source.stationType}`;
+    linkTo = '/radio';
   }
 
-  const isClip =
-    isSurahStream &&
-    source.clipStartSeconds !== undefined &&
-    source.clipEndSeconds !== undefined;
-  const clipDuration = isClip
-    ? Math.max(0, source.clipEndSeconds! - source.clipStartSeconds!)
-    : duration;
-  const clipCurrentTime = isClip
-    ? Math.max(0, Math.min(currentTime - source.clipStartSeconds!, clipDuration))
-    : currentTime;
-
-  const displayCurrentTime = isClip ? clipCurrentTime : currentTime;
+  const isClip = isSurahStream && source.clipStartSeconds !== undefined;
+  const clipStart = isClip ? source.clipStartSeconds! : 0;
+  const clipEnd = isClip && source.clipEndSeconds !== undefined ? source.clipEndSeconds : duration;
+  const clipDuration = isClip ? Math.max(0, clipEnd - clipStart) : duration;
+  const displayCurrentTime = isClip ? Math.max(0, currentTime - clipStart) : currentTime;
   const displayDuration = isClip ? clipDuration : duration;
-
-  if (!isRadio && status === 'paused' && currentTime > 0) {
-    secondaryTitle = `${secondaryTitle} · ${
-      pendingRestoreTime !== null ? 'الزمن المحفوظ' : 'توقف عند'
-    } ${formatAudioTime(displayCurrentTime)}`;
-  }
-
   const progressPercent =
-    !isRadio && displayDuration > 0
-      ? Math.min(100, (displayCurrentTime / displayDuration) * 100)
-      : 0;
+    displayDuration > 0 ? Math.min(100, (displayCurrentTime / displayDuration) * 100) : 0;
 
-  const disablePrev = isSurahStream ? source.surahNumber <= 1 && source.clipStartSeconds === undefined : true;
-  const disableNext = isSurahStream
-    ? source.surahNumber >= 114 && queue.length === 0
-    : queue.length === 0;
+  const disablePrev = isSurahStream && source.surahNumber <= 1 && !isClip;
+  const disableNext = isSurahStream && source.surahNumber >= 114 && queue.length === 0;
 
   return (
     <div
-      aria-label="المشغل الصوتي العام"
+      role="region"
+      aria-label="مشغل الصوت العام"
       className="fixed bottom-[76px] lg:bottom-4 left-3 right-3 lg:left-24 lg:right-[268px] z-40 pointer-events-none"
       dir="rtl"
     >
@@ -167,6 +157,68 @@ export const GlobalAudioPlayer: React.FC = () => {
                 </button>
               </div>
             )}
+
+            {/* Quick Cross-Platform Feature Launcher Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[var(--glass-border-subtle)] text-xs">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setCarModeOpen(true)}
+                  className="tactile-pill px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 text-ink-secondary hover:text-ink"
+                  title="فتح وضع القيادة والسيارة (Car Mode)"
+                >
+                  <Car size={13} className="text-emerald-500" />
+                  <span>وضع القيادة</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOfflineDrawerOpen(true)}
+                  className="tactile-pill px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 text-ink-secondary hover:text-ink"
+                  title="الاستماع وإدارة السور بدون إنترنت (Offline)"
+                >
+                  <HardDrive size={13} className="text-glow" />
+                  <span>بدون إنترنت</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQueueDrawerOpen(true)}
+                  className="tactile-pill px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 text-ink-secondary hover:text-ink"
+                  title="قائمة الانتظار وقوائم التشغيل"
+                >
+                  <ListMusic size={13} />
+                  <span>قائمة الانتظار {queue.length > 0 ? `(${queue.length})` : ''}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMiniPlayerOpen(true)}
+                  className="tactile-pill px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 text-ink-secondary hover:text-ink"
+                  title="مشغل سطح المكتب المصغر ونافذة PiP العائمة"
+                >
+                  <ExternalLink size={13} />
+                  <span>مشغل عائم</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDiagnosticsOpen(true)}
+                  className="tactile-pill px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 text-ink-secondary hover:text-ink"
+                  title="فحص جودة البث والصوتيات"
+                >
+                  <Activity size={13} />
+                  <span>فحص البث</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={toggleLowDataMode}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${
+                  lowDataMode ? 'bg-amber-500/20 text-amber-400' : 'text-ink-muted hover:text-ink'
+                }`}
+                title="توفير استهلاك باقة الإنترنت أثناء الاستماع"
+              >
+                {lowDataMode ? 'وضع توفير البيانات: مفعّل' : 'توفير البيانات'}
+              </button>
+            </div>
 
             {/* Seek Timeline */}
             {!isRadio && (
@@ -199,12 +251,12 @@ export const GlobalAudioPlayer: React.FC = () => {
                 {/* Speed controls */}
                 {!isRadio && (
                   <div className="recessed-well p-1 flex items-center gap-1">
-                    {[0.75, 1, 1.25, 1.5].map((rate) => (
+                    {[0.75, 1, 1.25, 1.5, 1.75, 2].map((rate) => (
                       <button
                         key={rate}
                         type="button"
                         onClick={() => setPlaybackRate(rate)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-bold transition-all ${
+                        className={`px-2 py-1 rounded-full text-[11px] font-mono font-bold transition-all ${
                           playbackRate === rate
                             ? 'tactile-pill text-glow'
                             : 'text-ink-secondary hover:text-ink'
@@ -246,15 +298,15 @@ export const GlobalAudioPlayer: React.FC = () => {
                 )}
 
                 {/* Sleep timer presets */}
-                <div className="recessed-well p-1 flex items-center gap-1" role="group" aria-label="مؤقت النوم">
+                <div className="recessed-well p-1 flex items-center gap-1 flex-wrap" role="group" aria-label="مؤقت النوم">
                   <span className="px-2 text-[11px] text-ink-muted flex items-center gap-1">
                     <Moon size={12} />
-                    {sleepRemainingMin ? `${toArabicDigits(sleepRemainingMin)}د` : 'مؤقت'}
+                    {sleepRemainingMin ? `${toArabicDigits(sleepRemainingMin)}د` : sleepTimerEndOfSurah ? 'نهاية السورة' : 'مؤقت'}
                   </span>
-                  {[null, 15, 30, 60].map((mins) => {
+                  {[null, 15, 30, 45, 60].map((mins) => {
                     const isActive =
                       mins === null
-                        ? !sleepTimerEndsAt
+                        ? !sleepTimerEndsAt && !sleepTimerEndOfSurah
                         : Boolean(sleepTimerEndsAt) && selectedSleepMinutes === mins;
                     return (
                       <button
@@ -274,6 +326,20 @@ export const GlobalAudioPlayer: React.FC = () => {
                       </button>
                     );
                   })}
+                  {isSurahStream && (
+                    <button
+                      type="button"
+                      aria-pressed={sleepTimerEndOfSurah}
+                      onClick={() => setSleepTimerEndOfSurah(!sleepTimerEndOfSurah)}
+                      className={`px-2 py-1 rounded-full text-[11px] font-bold transition-all ${
+                        sleepTimerEndOfSurah
+                          ? 'tactile-pill active-ayah-glow text-glow'
+                          : 'text-ink-secondary hover:text-ink'
+                      }`}
+                    >
+                      نهاية السورة
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -300,7 +366,7 @@ export const GlobalAudioPlayer: React.FC = () => {
               </div>
             </div>
 
-            {/* Active Queue */}
+            {/* Active Queue Preview */}
             {queue.length > 0 && (
               <div className="recessed-box p-2.5 flex flex-col gap-1.5 max-h-32 overflow-y-auto no-scrollbar">
                 <div className="flex items-center justify-between text-[11px] font-bold text-ink-muted px-1">
@@ -344,8 +410,18 @@ export const GlobalAudioPlayer: React.FC = () => {
         <div className="flex items-center justify-between gap-3">
           {/* Active Track Info */}
           <Link to={linkTo} className="flex items-center gap-3 min-w-0 group flex-1">
-            <div className="w-10 h-10 rounded-full tactile-pill flex items-center justify-center shrink-0 text-glow relative">
-              {isRadio ? <RadioIcon size={17} /> : <ListMusic size={17} />}
+            <div className="w-10 h-10 rounded-full tactile-pill flex items-center justify-center shrink-0 text-glow relative overflow-hidden">
+              {isSurahStream ? (
+                <img
+                  src="/audio-artwork-96.png"
+                  alt="شعار يقين"
+                  className="w-full h-full object-cover"
+                />
+              ) : isRadio ? (
+                <RadioIcon size={17} />
+              ) : (
+                <ListMusic size={17} />
+              )}
               {isPlaying && (
                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full amber-glow-dot animate-pulse" />
               )}

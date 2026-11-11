@@ -146,6 +146,37 @@ export const Home = () => {
         )}
       </section>
 
+      {/* Continue Listening Bar (متابعة الاستماع والتلاوة) */}
+      {savedPlayback && (
+        <section aria-label="متابعة الاستماع" className="bento-stage p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-emerald-500/25">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl tactile-pill flex items-center justify-center text-glow shrink-0 overflow-hidden shadow-sm">
+              <img src="/audio-artwork-96.png" alt="شعار يقين الصوتي" className="w-full h-full object-cover" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold text-emerald-500 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>متابعة الاستماع من آخر موضع توقفت عنده</span>
+              </span>
+              <h3 className="text-sm sm:text-base font-black font-cairo text-ink truncate">
+                سورة {stripSurahPrefix(savedPlayback.surahName)} — القارئ {savedPlayback.reciterName}
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={handleResumeAudio}
+              className="tactile-pill active-ayah-glow px-4 py-2.5 text-xs font-black text-glow flex items-center gap-2 hover:scale-102 active:scale-95 transition-all shadow-sm"
+            >
+              <Play size={13} fill="currentColor" />
+              <span>استئناف التلاوة</span>
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* ═══════════════════════════════════════════════════════════════════
           PRIMARY SECTION: QURAN FIRST — THREE CORE GATEWAYS
           1. اقرأ القرآن

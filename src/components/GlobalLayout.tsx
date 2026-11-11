@@ -12,6 +12,11 @@ import BookmarksDrawer from './BookmarksDrawer';
 import SettingsDrawer from './SettingsDrawer';
 import AudioEngine from './audio/AudioEngine';
 import GlobalAudioPlayer from './audio/GlobalAudioPlayer';
+import CarModeModal from './audio/CarModeModal';
+import OfflineAudioDrawer from './audio/OfflineAudioDrawer';
+import QueuePlaylistDrawer from './audio/QueuePlaylistDrawer';
+import AudioDiagnosticsModal from './audio/AudioDiagnosticsModal';
+import DesktopMiniPlayer from './audio/DesktopMiniPlayer';
 import OnboardingWelcome from './onboarding/OnboardingWelcome';
 import PwaInstallModal from './pwa/PwaInstallModal';
 import { useAudioStore } from '../store/useAudioStore';
@@ -126,7 +131,16 @@ export const GlobalLayout: React.FC = () => {
       </div>
 
       <AudioEngine />
-      {!isYaqeenModeActive && <GlobalAudioPlayer />}
+      {!isYaqeenModeActive && (
+        <>
+          <GlobalAudioPlayer />
+          <DesktopMiniPlayer />
+          <CarModeModal />
+          <OfflineAudioDrawer />
+          <QueuePlaylistDrawer />
+          <AudioDiagnosticsModal />
+        </>
+      )}
 
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       <BookmarksDrawer

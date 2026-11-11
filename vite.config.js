@@ -8,7 +8,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.png', 'logo-wide.png', 'fonts/UthmanicHafs1Ver18.woff2'],
+      includeAssets: [
+        'logo.png',
+        'logo-wide.png',
+        'audio-artwork.png',
+        'audio-artwork-512.png',
+        'audio-artwork-192.png',
+        'fonts/UthmanicHafs1Ver18.woff2',
+      ],
       manifest: {
         id: '/',
         name: 'يقين — معرفة تُثمر يقيناً',
@@ -35,6 +42,39 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
+          },
+          {
+            src: '/audio-artwork-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+        ],
+        widgets: [
+          {
+            name: 'يقين — مشغل القرآن الكريم',
+            short_name: 'مشغل يقين',
+            description: 'التحكم في تلاوة القرآن الكريم ومتابعة الاستماع مباشرة من سطح المكتب أو الشاشة الرئيسية',
+            tag: 'yaqeen-audio-widget',
+            template: 'widget-template',
+            ms_ac_template: 'widget-adaptive-card.json',
+            data: '/api/widget-data',
+            type: 'application/json',
+            screenshots: [
+              {
+                src: '/audio-artwork-512.png',
+                sizes: '512x512',
+                label: 'مشغل يقين القرآني',
+              },
+            ],
+            icons: [
+              {
+                src: '/audio-artwork-192.png',
+                sizes: '192x192',
+              },
+            ],
+            auth: false,
+            update: 86400,
           },
         ],
       },

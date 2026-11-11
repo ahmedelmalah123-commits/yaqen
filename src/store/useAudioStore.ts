@@ -4,7 +4,7 @@ import { getReciterById, getSurahAudioUrl } from '../lib/data/recitersData';
 import { getSurahMeta } from '../features/quran/surahMetadata';
 import { stripSurahPrefix } from '../lib/arabicSearch';
 
-export type RepeatMode = 'none' | 'ayah' | 'surah';
+export type RepeatMode = 'none' | 'ayah' | 'surah' | 'playlist';
 
 export interface LastReadingSession {
   surahNumber: number;
@@ -13,6 +13,25 @@ export interface LastReadingSession {
   ayahIndex: number;
   reciterId: string;
   updatedAt: string;
+}
+
+export interface ListeningHistoryItem {
+  id: string; // `${reciterId}_${surahNumber}`
+  surahNumber: number;
+  surahName: string;
+  reciterId: string;
+  reciterName: string;
+  position: number;
+  duration: number;
+  completed: boolean;
+  updatedAt: string;
+}
+
+export interface SavedPlaylist {
+  id: string;
+  title: string;
+  createdAt: string;
+  tracks: QueuedTrack[];
 }
 
 export type ActiveSource =
@@ -102,7 +121,7 @@ function buildSavedPlayback(
   };
 }
 
-interface AudioState {
+export interface AudioState {
   source: ActiveSource | null;
   status: 'idle' | 'loading' | 'playing' | 'paused' | 'error';
   errorMessage: string | null;
@@ -114,6 +133,7 @@ interface AudioState {
   repeatMode: RepeatMode;
   sleepTimerEndsAt: number | null;
   selectedSleepMinutes: number | null;
+  sleepTimerEndOfSurah: boolean;
   isExpanded: boolean;
   seekRequest: number | null;
   pendingRestoreTime: number | null;
@@ -121,6 +141,20 @@ interface AudioState {
   queue: QueuedTrack[];
   lastSession: LastReadingSession | null;
   savedPlayback: SavedPlaybackState | null;
+
+  // New Cross-Platform Audio Experience & Modes
+  listeningHistory: ListeningHistoryItem[];
+  savedPlaylists: SavedPlaylist[];
+  isCarModeOpen: boolean;
+  isDiagnosticsOpen: boolean;
+  isMiniPlayerOpen: boolean;
+  isQueueDrawerOpen: boolean;
+  isOfflineDrawerOpen: boolean;
+  isDocumentPipActive: boolean;
+  lowDataMode: boolean;
+  autoContinue: boolean;
+  networkStatus: 'online' | 'offline' | 'reconnecting';
+  retryCount: number;
 
   playSurahStream: (payload: {
     surahNumber: number;
@@ -154,11 +188,35 @@ interface AudioState {
   setPlaybackRate: (rate: number) => void;
   cycleRepeatMode: () => void;
   setSleepTimerMinutes: (minutes: number | null) => void;
+  setSleepTimerEndOfSurah: (enabled: boolean) => void;
   setExpanded: (expanded: boolean) => void;
+  setCarModeOpen: (open: boolean) => void;
+  setDiagnosticsOpen: (open: boolean) => void;
+  setMiniPlayerOpen: (open: boolean) => void;
+  setQueueDrawerOpen: (open: boolean) => void;
+  setOfflineDrawerOpen: (open: boolean) => void;
+  setDocumentPipActive: (active: boolean) => void;
+  toggleLowDataMode: () => void;
+  setAutoContinue: (val: boolean) => void;
+  setNetworkStatus: (status: 'online' | 'offline' | 'reconnecting') => void;
+  incrementRetryCount: () => void;
+  resetRetryCount: () => void;
+
+  // Queue & Playlist actions
   enqueueTrack: (item: QueuedTrack) => void;
+  enqueueNext: (item: QueuedTrack) => void;
   removeQueueItem: (id: string) => void;
+  reorderQueue: (fromIndex: number, toIndex: number) => void;
   clearQueue: () => void;
   playNextFromQueue: () => boolean;
+  saveCurrentQueueAsPlaylist: (title: string) => void;
+  loadSavedPlaylist: (id: string) => void;
+  deleteSavedPlaylist: (id: string) => void;
+
+  // History & Diagnostics
+  recordListeningHistory: (item: Omit<ListeningHistoryItem, 'id' | 'updatedAt'>) => void;
+  clearListeningHistory: () => void;
+
   setRuntimeState: (
     patch: Partial<Pick<AudioState, 'status' | 'errorMessage' | 'currentTime' | 'duration'>>
   ) => void;
@@ -180,6 +238,7 @@ export const useAudioStore = create<AudioState>()(
       repeatMode: 'none',
       sleepTimerEndsAt: null,
       selectedSleepMinutes: null,
+      sleepTimerEndOfSurah: false,
       isExpanded: false,
       seekRequest: null,
       pendingRestoreTime: null,
@@ -187,6 +246,19 @@ export const useAudioStore = create<AudioState>()(
       queue: [],
       lastSession: null,
       savedPlayback: null,
+
+      listeningHistory: [],
+      savedPlaylists: [],
+      isCarModeOpen: false,
+      isDiagnosticsOpen: false,
+      isMiniPlayerOpen: false,
+      isQueueDrawerOpen: false,
+      isOfflineDrawerOpen: false,
+      isDocumentPipActive: false,
+      lowDataMode: false,
+      autoContinue: true,
+      networkStatus: 'online',
+      retryCount: 0,
 
       playSurahStream: (payload) => {
         const startSec =
@@ -233,6 +305,16 @@ export const useAudioStore = create<AudioState>()(
             updatedAt: new Date().toISOString(),
           },
         }));
+
+        get().recordListeningHistory({
+          surahNumber: payload.surahNumber,
+          surahName: payload.surahName,
+          reciterId: payload.reciterId,
+          reciterName: payload.reciterName,
+          position: startSec,
+          duration: 0,
+          completed: false,
+        });
       },
 
       seekAndPlaySurahStream: (seconds) => {
@@ -289,11 +371,13 @@ export const useAudioStore = create<AudioState>()(
           currentTime: 0,
           duration: 0,
           isExpanded: false,
+          isCarModeOpen: false,
           seekRequest: null,
           pendingRestoreTime: null,
           savedPlayback: null,
           sleepTimerEndsAt: null,
           selectedSleepMinutes: null,
+          sleepTimerEndOfSurah: false,
         }),
 
       nextTrack: () => {
@@ -383,9 +467,28 @@ export const useAudioStore = create<AudioState>()(
           sleepTimerEndsAt:
             minutes && minutes > 0 ? Date.now() + minutes * 60_000 : null,
           selectedSleepMinutes: minutes && minutes > 0 ? minutes : null,
+          sleepTimerEndOfSurah: false,
+        }),
+
+      setSleepTimerEndOfSurah: (enabled) =>
+        set({
+          sleepTimerEndOfSurah: enabled,
+          sleepTimerEndsAt: null,
+          selectedSleepMinutes: null,
         }),
 
       setExpanded: (isExpanded) => set({ isExpanded }),
+      setCarModeOpen: (isCarModeOpen) => set({ isCarModeOpen }),
+      setDiagnosticsOpen: (isDiagnosticsOpen) => set({ isDiagnosticsOpen }),
+      setMiniPlayerOpen: (isMiniPlayerOpen) => set({ isMiniPlayerOpen }),
+      setQueueDrawerOpen: (isQueueDrawerOpen) => set({ isQueueDrawerOpen }),
+      setOfflineDrawerOpen: (isOfflineDrawerOpen) => set({ isOfflineDrawerOpen }),
+      setDocumentPipActive: (isDocumentPipActive) => set({ isDocumentPipActive }),
+      toggleLowDataMode: () => set((s) => ({ lowDataMode: !s.lowDataMode })),
+      setAutoContinue: (autoContinue) => set({ autoContinue }),
+      setNetworkStatus: (networkStatus) => set({ networkStatus }),
+      incrementRetryCount: () => set((s) => ({ retryCount: s.retryCount + 1 })),
+      resetRetryCount: () => set({ retryCount: 0 }),
 
       enqueueTrack: (item) =>
         set((state) => {
@@ -396,8 +499,27 @@ export const useAudioStore = create<AudioState>()(
           return { queue: [...state.queue, item] };
         }),
 
+      enqueueNext: (item) =>
+        set((state) => {
+          if (item.source.kind !== 'surah-stream' && item.source.kind !== 'radio') {
+            return state;
+          }
+          const filtered = state.queue.filter((q) => q.id !== item.id);
+          return { queue: [item, ...filtered] };
+        }),
+
       removeQueueItem: (id) =>
         set((state) => ({ queue: state.queue.filter((item) => item.id !== id) })),
+
+      reorderQueue: (fromIndex, toIndex) =>
+        set((state) => {
+          const list = [...state.queue];
+          const [moved] = list.splice(fromIndex, 1);
+          if (moved) {
+            list.splice(toIndex, 0, moved);
+          }
+          return { queue: list };
+        }),
 
       clearQueue: () => set({ queue: [] }),
 
@@ -421,6 +543,58 @@ export const useAudioStore = create<AudioState>()(
         return true;
       },
 
+      saveCurrentQueueAsPlaylist: (title) =>
+        set((state) => {
+          if (state.queue.length === 0) return state;
+          const newPlaylist: SavedPlaylist = {
+            id: `pl_${Date.now()}`,
+            title: title.trim() || `قائمة ${new Date().toLocaleDateString('ar-EG')}`,
+            createdAt: new Date().toISOString(),
+            tracks: [...state.queue],
+          };
+          return { savedPlaylists: [newPlaylist, ...state.savedPlaylists] };
+        }),
+
+      loadSavedPlaylist: (id) =>
+        set((state) => {
+          const target = state.savedPlaylists.find((p) => p.id === id);
+          if (!target || target.tracks.length === 0) return state;
+          const [first, ...rest] = target.tracks;
+          return {
+            source: first.source,
+            queue: rest,
+            status: 'loading',
+            errorMessage: null,
+            currentTime: 0,
+            duration: 0,
+            seekRequest: null,
+            pendingRestoreTime: null,
+            playRequestToken: state.playRequestToken + 1,
+            savedPlayback: buildSavedPlayback(first.source, 0, 0),
+          };
+        }),
+
+      deleteSavedPlaylist: (id) =>
+        set((state) => ({
+          savedPlaylists: state.savedPlaylists.filter((p) => p.id !== id),
+        })),
+
+      recordListeningHistory: (item) =>
+        set((state) => {
+          const key = `${item.reciterId}_${item.surahNumber}`;
+          const existingFiltered = state.listeningHistory.filter((h) => h.id !== key);
+          const newItem: ListeningHistoryItem = {
+            ...item,
+            id: key,
+            updatedAt: new Date().toISOString(),
+          };
+          return {
+            listeningHistory: [newItem, ...existingFiltered].slice(0, 20),
+          };
+        }),
+
+      clearListeningHistory: () => set({ listeningHistory: [] }),
+
       setRuntimeState: (patch) => set(patch),
 
       persistPlaybackProgress: (currentTime, duration) =>
@@ -428,10 +602,28 @@ export const useAudioStore = create<AudioState>()(
           if (!state.source || state.source.kind === 'radio' || state.pendingRestoreTime !== null) {
             return state;
           }
+          const isDone = duration > 0 && currentTime >= duration - 5;
+          const updatedHistory = state.listeningHistory.map((h) => {
+            if (
+              state.source?.kind === 'surah-stream' &&
+              h.id === `${state.source.reciterId}_${state.source.surahNumber}`
+            ) {
+              return {
+                ...h,
+                position: currentTime,
+                duration: duration || h.duration,
+                completed: isDone,
+                updatedAt: new Date().toISOString(),
+              };
+            }
+            return h;
+          });
+
           return {
             currentTime,
             duration,
             savedPlayback: buildSavedPlayback(state.source, currentTime, duration),
+            listeningHistory: updatedHistory,
           };
         }),
 
@@ -446,6 +638,10 @@ export const useAudioStore = create<AudioState>()(
         repeatMode: state.repeatMode,
         lastSession: state.lastSession,
         savedPlayback: state.savedPlayback,
+        listeningHistory: state.listeningHistory,
+        savedPlaylists: state.savedPlaylists,
+        lowDataMode: state.lowDataMode,
+        autoContinue: state.autoContinue,
       }),
       merge: (persistedState, currentState) => {
         const persisted = (persistedState || {}) as Partial<AudioState>;
@@ -466,6 +662,10 @@ export const useAudioStore = create<AudioState>()(
               persisted.repeatMode ?? currentState.repeatMode,
               saved.source
             ),
+            listeningHistory: Array.isArray(persisted.listeningHistory) ? persisted.listeningHistory : [],
+            savedPlaylists: Array.isArray(persisted.savedPlaylists) ? persisted.savedPlaylists : [],
+            lowDataMode: Boolean(persisted.lowDataMode),
+            autoContinue: persisted.autoContinue !== undefined ? persisted.autoContinue : true,
           };
         }
         return {
@@ -476,6 +676,10 @@ export const useAudioStore = create<AudioState>()(
           repeatMode: normalizeRepeatMode(persisted.repeatMode ?? 'none', null),
           lastSession: persisted.lastSession ?? null,
           savedPlayback: null,
+          listeningHistory: Array.isArray(persisted.listeningHistory) ? persisted.listeningHistory : [],
+          savedPlaylists: Array.isArray(persisted.savedPlaylists) ? persisted.savedPlaylists : [],
+          lowDataMode: Boolean(persisted.lowDataMode),
+          autoContinue: persisted.autoContinue !== undefined ? persisted.autoContinue : true,
         };
       },
     }
