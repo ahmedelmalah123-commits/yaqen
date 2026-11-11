@@ -1,24 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { seerahData } from '../lib/data/seerahData';
+import { SectionHeader } from '../components/ui/Primitives';
 
 const Seerah = () => {
   return (
-    <div className="max-w-[1440px] mx-auto w-full bento-stage p-5 sm:p-8 font-ibm flex flex-col gap-8">
-      <div>
-        <span className="text-xs font-bold text-ink-muted block mb-1">
-          الخط الزمني التفاعلي
-        </span>
-        <h1 className="text-3xl sm:text-5xl font-black font-cairo text-ink">
-          السيرة النبوية
-        </h1>
-        <p className="text-sm sm:text-base text-ink-secondary mt-1.5 max-w-3xl">
-          تتبع مسيرة خير البرية ﷺ عبر خط زمني متسلسل يروي أعظم قصة عرفتها البشرية.
-        </p>
-      </div>
+    <div className="bento-stage p-5 sm:p-8 font-tajawal flex flex-col gap-8" dir="rtl">
+      <SectionHeader
+        eyebrow="الخط الزمني التفاعلي"
+        title="السيرة النبوية"
+        description="تتبع مسيرة خير البرية ﷺ عبر خط زمني متسلسل يروي أعظم قصة عرفتها البشرية."
+      />
 
       <div className="relative">
-        {/* Central Vertical Track */}
         <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-1.5 -translate-x-1/2 recessed-well" />
 
         <div className="space-y-8 md:space-y-12">
@@ -27,27 +21,25 @@ const Seerah = () => {
             return (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.45 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.35 }}
                 className={`relative flex flex-col md:flex-row items-center ${
                   isEven ? 'md:flex-row-reverse' : ''
                 }`}
               >
-                {/* Glowing Timeline Node */}
                 <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-5 h-5 rounded-full tactile-pill items-center justify-center z-20">
                   <span className="w-2.5 h-2.5 rounded-full amber-glow-dot" />
                 </div>
 
-                {/* Content Card */}
                 <div
                   className={`w-full md:w-1/2 flex ${
                     isEven ? 'md:justify-start md:pl-10' : 'md:justify-end md:pr-10'
                   }`}
                 >
-                  <div className="tactile-card p-6 sm:p-8 w-full flex flex-col gap-4">
-                    {item.media && item.media.type === 'image' && (
+                  <article className="tactile-card p-6 sm:p-8 w-full flex flex-col gap-4">
+                    {item.media?.type === 'image' && (
                       <div className="w-full h-48 sm:h-56 rounded-2xl overflow-hidden recessed-box">
                         <img
                           loading="lazy"
@@ -67,9 +59,9 @@ const Seerah = () => {
                       </span>
                     </div>
 
-                    <h3 className="text-2xl sm:text-3xl font-black font-cairo text-ink leading-tight">
+                    <h2 className="text-2xl sm:text-3xl font-black font-cairo text-ink leading-tight">
                       {item.title}
-                    </h3>
+                    </h2>
 
                     <div className="space-y-3">
                       {item.content.map((paragraph, idx) => (
@@ -81,7 +73,7 @@ const Seerah = () => {
                         </p>
                       ))}
                     </div>
-                  </div>
+                  </article>
                 </div>
 
                 <div className="hidden md:block w-1/2" />

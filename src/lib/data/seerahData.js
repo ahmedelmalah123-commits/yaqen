@@ -11,7 +11,7 @@ export const seerahData = [
     media: {
       type: "image",
       title: "غار حراء والأجواء الروحانية",
-      src: "/seerah/hira.png"
+      src: "/seerah/hira.webp"
     }
   },
   {
@@ -26,7 +26,7 @@ export const seerahData = [
     media: {
       type: "image",
       title: "صحراء الهجرة النبوية",
-      src: "/seerah/hijrah.png"
+      src: "/seerah/hijrah.webp"
     }
   },
   {
@@ -41,7 +41,7 @@ export const seerahData = [
     media: {
       type: "image",
       title: "المدينة المنورة قديماً",
-      src: "/seerah/medina.png"
+      src: "/seerah/medina.webp"
     }
   },
   {
@@ -56,7 +56,7 @@ export const seerahData = [
     media: {
       type: "image",
       title: "غزوة بدر وأجواء المعركة",
-      src: "/seerah/badr.png"
+      src: "/seerah/badr.webp"
     }
   },
   {
@@ -71,7 +71,7 @@ export const seerahData = [
     media: {
       type: "image",
       title: "جبل عرفات الروحاني",
-      src: "/seerah/farewell.png"
+      src: "/seerah/farewell.webp"
     }
   }
 ];

@@ -1,160 +1,152 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { recitersData } from '../lib/data/recitersData';
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Mic2, ArrowUpLeft, Check, X } from 'lucide-react';
+import { recitersData, RECITER_GROUP_ORDER, getReciterById } from '../lib/data/recitersData';
 import { useAppStore } from '../store/useAppStore';
-import { Mic, Search, ArrowUpLeft } from 'lucide-react';
-
-const CATEGORY_MAP = {
-  all: 'all',
-  الكل: 'all',
-  murattal: 'murattal',
-  مرتل: 'murattal',
-  mujawwad: 'mujawwad',
-  مجود: 'mujawwad',
-  rare: 'rare',
-  نادر: 'rare',
-};
+import { matchesNormalized, toArabicDigits } from '../lib/arabicSearch';
+import { SectionHeader } from '../components/ui/Primitives';
+import { EmptyState } from '../components/ui/StateViews';
 
 const RecitersPage = () => {
-  const { reciter: activeReciter, setReciter } = useAppStore();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialCategory = CATEGORY_MAP[searchParams.get('category')] || 'all';
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeGroup, setActiveGroup] = useState('all');
 
-  const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState(initialCategory);
+  const navigate = useNavigate();
+  const currentReciterId = useAppStore((s) => s.reciter);
+  const setReciter = useAppStore((s) => s.setReciter);
 
-  useEffect(() => {
-    const paramCat = CATEGORY_MAP[searchParams.get('category')];
-    if (paramCat) {
-      setFilterType(paramCat);
-    }
-  }, [searchParams]);
+  const currentReciter = getReciterById(currentReciterId);
 
-  const handleFilterChange = (type) => {
-    setFilterType(type);
-    if (type === 'all') {
-      searchParams.delete('category');
-      setSearchParams(searchParams);
-    } else {
-      const label = type === 'rare' ? 'نادر' : type === 'mujawwad' ? 'مجود' : 'مرتل';
-      setSearchParams({ category: label });
-    }
-  };
-
-  const filteredReciters = recitersData.filter((r) => {
-    const matchSearch = r.name.includes(search);
-    const matchType = filterType === 'all' || r.type === filterType;
-    return matchSearch && matchType;
-  });
+  const filtered = useMemo(() => {
+    return recitersData.filter((r) => {
+      if (activeGroup !== 'all' && r.group !== activeGroup) return false;
+      if (!searchQuery.trim()) return true;
+      return (
+        matchesNormalized(r.name, searchQuery) ||
+        matchesNormalized(r.group, searchQuery) ||
+        matchesNormalized(r.narration, searchQuery)
+      );
+    });
+  }, [searchQuery, activeGroup]);
 
   return (
-    <div className="max-w-[1440px] mx-auto w-full bento-stage p-5 sm:p-8 font-tajawal flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-        <div>
-          <span className="text-xs font-bold text-ink-muted block mb-1">
-            المكتبة الصوتية · {recitersData.length.toLocaleString('ar-EG')} قارئاً
+    <div className="bento-stage p-5 sm:p-8 flex flex-col gap-6 font-tajawal" dir="rtl">
+      <SectionHeader
+        eyebrow="أصوات من نور"
+        title="قراء القرآن الكريم"
+        description={`اختر القارئ المفضل لاعتماده في المصحف الشريف والمشغل العام (${toArabicDigits(recitersData.length)} قارئاً بتلاوات كاملة متصلة لجميع السور).`}
+        action={
+          <span className="recessed-well px-4 py-2 text-xs font-bold text-ink flex items-center gap-2">
+            <Mic2 size={14} className="text-glow" />
+            <span>المعتمد حالياً: {currentReciter.name}</span>
           </span>
-          <h1 className="text-3xl sm:text-5xl font-black font-cairo text-ink">
-            القراء والتسجيلات
-          </h1>
-          <p className="text-sm sm:text-base text-ink-secondary mt-1.5">
-            اختر قارئك المفضل للانتقال المباشر وتلاوة المصحف بصوته
-          </p>
+        }
+      />
+
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="recessed-well px-4 py-2.5 flex items-center gap-2.5 flex-1 max-w-md">
+          <Search size={16} className="text-glow shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="ابحث باسم القارئ..."
+            aria-label="ابحث باسم القارئ"
+            className="flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:text-ink-muted"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="مسح"
+              className="text-ink-muted hover:text-ink"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="recessed-well p-1.5 flex flex-wrap items-center gap-1.5 self-start">
-          {[
-            { id: 'all', label: 'الكل' },
-            { id: 'murattal', label: 'مرتل' },
-            { id: 'mujawwad', label: 'مجود' },
-            { id: 'rare', label: 'نادر' },
-          ].map((item) => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {['all', ...RECITER_GROUP_ORDER].map((group) => (
             <button
-              key={item.id}
+              key={group}
               type="button"
-              onClick={() => handleFilterChange(item.id)}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                filterType === item.id
-                  ? 'tactile-pill text-ink'
-                  : 'text-ink-secondary hover:text-ink'
+              onClick={() => setActiveGroup(group)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                activeGroup === group
+                  ? 'tactile-pill active-ayah-glow text-glow'
+                  : 'recessed-box text-ink-secondary hover:text-ink'
               }`}
             >
-              {item.label}
+              {group === 'all' ? 'الكل' : group}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Recessed Search */}
-      <div className="recessed-well h-12 px-4 flex items-center gap-3">
-        <Search className="text-ink-secondary shrink-0" size={17} />
-        <input
-          type="text"
-          placeholder="ابحث عن قارئ..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-transparent outline-none text-sm font-medium text-ink placeholder:text-ink-muted"
-          dir="rtl"
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<Mic2 size={22} />}
+          title="لا توجد نتائج مطابقة للبحث"
+          description="جرب البحث باسم قارئ آخر أو اعرض جميع الفئات."
         />
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredReciters.map((r) => {
-          const isCurrent = activeReciter === r.id;
-          return (
-            <div
-              key={r.id}
-              className={`p-5 rounded-[24px] flex flex-col justify-between gap-5 transition-all ${
-                isCurrent ? 'active-ayah-glow' : 'tactile-card'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div
-                    className={`w-12 h-12 rounded-2xl recessed-box flex items-center justify-center shrink-0 ${
-                      isCurrent ? 'text-glow' : 'text-ink-secondary'
-                    }`}
-                  >
-                    <Mic size={20} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((rec) => {
+            const isSelected = rec.id === currentReciter.id;
+            return (
+              <div
+                key={rec.id}
+                className={`tactile-card p-5 flex flex-col justify-between gap-4 transition-all ${
+                  isSelected ? 'active-ayah-glow border-glow-border' : ''
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-2xl recessed-box flex items-center justify-center text-glow shrink-0">
+                      <Mic2 size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-base font-extrabold font-cairo text-ink truncate">
+                        {rec.name}
+                      </h2>
+                      <p className="text-xs text-ink-secondary mt-0.5">
+                        {rec.group} · {rec.narration}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-base sm:text-lg font-extrabold text-ink truncate font-cairo">
-                      {r.name}
-                    </h3>
-                    <span className="text-xs text-ink-secondary font-medium">
-                      {r.type === 'murattal'
-                        ? 'ترتيل'
-                        : r.type === 'mujawwad'
-                        ? 'تجويد'
-                        : 'تسجيلات نادرة'}
-                    </span>
-                  </div>
+                  <span className="recessed-well px-2.5 py-0.5 text-[10px] font-bold text-ink-muted shrink-0">
+                    {rec.timingMoshafId ? 'سورة كاملة · مزامنة' : 'سورة كاملة'}
+                  </span>
                 </div>
 
-                {isCurrent && (
-                  <span className="w-2.5 h-2.5 rounded-full amber-glow-dot shrink-0" />
-                )}
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setReciter(rec.id)}
+                    className={`flex-1 tactile-pill py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 ${
+                      isSelected ? 'active-ayah-glow text-glow' : 'text-ink hover:text-glow'
+                    }`}
+                  >
+                    {isSelected && <Check size={14} />}
+                    <span>{isSelected ? 'مختار حالياً' : 'اعتماد القارئ'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReciter(rec.id);
+                      navigate('/quran');
+                    }}
+                    className="tactile-pill py-2 px-3 text-xs font-bold text-ink-secondary hover:text-ink flex items-center gap-1"
+                  >
+                    <span>المصحف</span>
+                    <ArrowUpLeft size={14} />
+                  </button>
+                </div>
               </div>
-
-              <Link
-                to="/quran"
-                onClick={() => setReciter(r.id)}
-                className="tactile-pill py-2.5 px-4 text-xs font-bold text-ink hover:text-glow flex items-center justify-between"
-              >
-                <span>{isCurrent ? 'القارئ النشط · تصفح السور' : 'اختيار القارئ'}</span>
-                <ArrowUpLeft size={15} />
-              </Link>
-            </div>
-          );
-        })}
-      </div>
-
-      {filteredReciters.length === 0 && (
-        <div className="recessed-box text-center py-14 text-ink-secondary font-bold">
-          لا توجد نتائج مطابقة لبحثك
+            );
+          })}
         </div>
       )}
     </div>

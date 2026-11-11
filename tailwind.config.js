@@ -1,10 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',
   ],
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
@@ -12,50 +12,34 @@ export default {
         stage: 'var(--bg-stage)',
         elevated: 'var(--bg-elevated)',
         recessed: 'var(--bg-recessed)',
-        ink: {
-          DEFAULT: 'var(--ink-primary)',
-          primary: 'var(--ink-primary)',
-          secondary: 'var(--ink-secondary)',
-          muted: 'var(--ink-muted)',
+        ink: 'var(--ink-primary)',
+        'ink-secondary': 'var(--ink-secondary)',
+        'ink-muted': 'var(--ink-muted)',
+        glow: 'var(--accent-glow)',
+        'glow-soft': 'var(--glow-soft)',
+        'glow-border': 'var(--glow-border)',
+        accent: {
+          gold: '#D97706',
+          'gold-light': '#F59E0B',
         },
-        glow: {
-          DEFAULT: 'var(--accent-glow)',
-          soft: 'var(--accent-glow-soft)',
-          border: 'var(--accent-glow-border)',
-        },
-        yaqeen: {
-          light: 'var(--bg-elevated)',
-          DEFAULT: 'var(--accent-glow)',
-          dark: 'var(--bg-recessed)',
-        },
-        primary: 'var(--accent-glow)',
-        secondary: 'var(--ink-primary)',
-        accent: 'var(--accent-glow)',
-        dark: {
-          bg: 'var(--bg-canvas)',
-          surface: 'var(--bg-stage)',
-          border: 'var(--glass-border)',
-        },
+      },
+      fontFamily: {
+        cairo: ['Cairo', 'Tajawal', 'sans-serif'],
+        tajawal: ['Tajawal', 'Cairo', 'sans-serif'],
+        amiri: ['"Amiri Quran"', 'Amiri', 'serif'],
+        uthmanic: ['"UthmanicHafs"', '"Amiri Quran"', 'Amiri', '"Noto Naskh Arabic"', 'serif'],
+        naskh: ['"Noto Naskh Arabic"', 'Amiri', 'serif'],
+        readex: ['Tajawal', 'Cairo', 'sans-serif'],
       },
       boxShadow: {
         raised: 'var(--shadow-raised)',
         'raised-sm': 'var(--shadow-raised-sm)',
-        inset: 'var(--shadow-inset)',
-        'inset-deep': 'var(--shadow-inset-deep)',
-        glow: 'var(--accent-glow-shadow)',
+        recessed: 'var(--shadow-recessed)',
       },
-      fontFamily: {
-        tajawal: ["'Tajawal'", "sans-serif"],
-        poppins: ["'Poppins'", "sans-serif"],
-        cairo: ["'Cairo'", "sans-serif"],
-        reem: ["'Cairo'", "'Tajawal'", "sans-serif"],
-        marhey: ["'Marhey'", "cursive"],
-        amiri: ["'Amiri Quran'", "'Amiri'", "serif"],
-        uthmanic: ["'UthmanicHafs'", "'Amiri Quran'", "'Amiri'", "serif"],
-        playpen: ["'Playpen Sans Arabic'", "cursive"],
-        ibm: ["'IBM Plex Sans Arabic'", "'Tajawal'", "sans-serif"],
-        kufi: ["'Noto Kufi Arabic'", "'Cairo'", "sans-serif"],
-        readex: ["'Readex Pro'", "'Tajawal'", "sans-serif"],
+      borderRadius: {
+        stage: '28px',
+        card: '22px',
+        pill: '9999px',
       },
     },
   },

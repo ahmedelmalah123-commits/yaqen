@@ -1,247 +1,247 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Cairo:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Marhey:wght@300;400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&family=Playpen+Sans+Arabic:wght@100..800&family=Poppins:wght@300;400;500;600;700&family=Readex+Pro:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700;800&display=swap');
-
-@font-face {
-  font-family: 'UthmanicHafs';
-  src: url('https://cdn.quran.com/fonts/uthmanic_hafs_v2/UthmanicHafs2.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'UthmanicHafs';
+  src: url('/fonts/UthmanicHafs1Ver18.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   YAQEEN DESIGN SYSTEM — Warm Cream / Ivory Refined Neumorphism
+   Inspired by tactile editorial depth, defaulting to warm daylight
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+  --bg-canvas: #F3EEE4;
+  --bg-stage: #EBE4D6;
+  --bg-elevated: #FAF7F0;
+  --bg-recessed: #E2DACB;
+  --ink-primary: #181A18;
+  --ink-secondary: #464A43;
+  --ink-muted: #5E635B;
+  --accent-glow: #C45000;
+  --accent-glow-hover: #D85900;
+  --glow-soft: rgba(196, 80, 0, 0.12);
+  --glow-border: rgba(196, 80, 0, 0.34);
+  --border-tactile: rgba(124, 113, 92, 0.16);
+  --shadow-raised:
+    6px 6px 14px rgba(132, 121, 100, 0.22),
+    -5px -5px 12px rgba(255, 253, 248, 0.88);
+  --shadow-raised-sm:
+    3px 3px 8px rgba(132, 121, 100, 0.18),
+    -3px -3px 8px rgba(255, 253, 248, 0.82);
+  --shadow-recessed:
+    inset 3px 3px 6px rgba(132, 121, 100, 0.22),
+    inset -3px -3px 6px rgba(255, 253, 248, 0.78);
+  --glass-surface: rgba(250, 247, 240, 0.84);
+  --glass-surface-strong: rgba(250, 247, 240, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.78);
+  --glass-border-subtle: rgba(124, 113, 92, 0.18);
+  --sidebar-width: 15.5rem;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-canvas: #191C1A;
+  --bg-stage: #202422;
+  --bg-elevated: #272C29;
+  --bg-recessed: #141715;
+  --ink-primary: #F4EFE6;
+  --ink-secondary: #C8C3B7;
+  --ink-muted: #989387;
+  --accent-glow: #FF8838;
+  --accent-glow-hover: #FF9C59;
+  --glow-soft: rgba(255, 136, 56, 0.16);
+  --glow-border: rgba(255, 136, 56, 0.36);
+  --border-tactile: rgba(255, 255, 255, 0.07);
+  --shadow-raised:
+    6px 6px 16px rgba(0, 0, 0, 0.48),
+    -4px -4px 12px rgba(255, 255, 255, 0.035);
+  --shadow-raised-sm:
+    3px 3px 9px rgba(0, 0, 0, 0.42),
+    -2px -2px 7px rgba(255, 255, 255, 0.03);
+  --shadow-recessed:
+    inset 3px 3px 7px rgba(0, 0, 0, 0.52),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.03);
+  --glass-surface: rgba(34, 38, 36, 0.86);
+  --glass-surface-strong: rgba(30, 34, 32, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-subtle: rgba(255, 255, 255, 0.09);
+}
+
 @layer base {
-  :root {
-    /* الأسطح الأساسية المنحوتة - Warm Creamy Alabaster */
-    --bg-canvas: #ECEAE4;
-    --bg-stage: #F1EFEA;
-    --bg-elevated: #F6F4EF;
-    --bg-recessed: #E2E0D8;
-
-    /* الطبقة الزجاجية المصنفرة - Frosted Glass Hybrid */
-    --glass-surface: rgba(246, 244, 239, 0.72);
-    --glass-surface-strong: rgba(250, 248, 244, 0.86);
-    --glass-border: rgba(255, 255, 255, 0.82);
-    --glass-border-subtle: rgba(255, 255, 255, 0.48);
-    --glass-blur: blur(18px) saturate(140%);
-
-    /* الحبر والنصوص - Ink Hierarchy */
-    --ink-primary: #161615;
-    --ink-secondary: #686660;
-    --ink-muted: #98958D;
-
-    /* النقطة الضوئية الدافئة */
-    --accent-glow: #E86A24;
-    --accent-glow-soft: rgba(232, 106, 36, 0.10);
-    --accent-glow-border: rgba(232, 106, 36, 0.32);
-    --accent-glow-shadow: 0 0 18px rgba(232, 106, 36, 0.38);
-
-    /* الظلال النيومورفيك الناعمة */
-    --shadow-raised: 8px 12px 24px rgba(20, 20, 18, 0.055), -6px -6px 16px rgba(255, 255, 255, 0.88);
-    --shadow-raised-sm: 4px 6px 12px rgba(20, 20, 18, 0.05), -3px -3px 8px rgba(255, 255, 255, 0.85);
-    --shadow-inset: inset 3px 3px 7px rgba(20, 20, 18, 0.075), inset -3px -3px 7px rgba(255, 255, 255, 0.90);
-    --shadow-inset-deep: inset 5px 5px 11px rgba(20, 20, 18, 0.095), inset -5px -5px 11px rgba(255, 255, 255, 0.92);
-
-    /* Safe Area Insets */
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
-  }
-
-  .dark {
-    /* الأسطح الأساسية المنحوتة - Deep Matte Obsidian */
-    --bg-canvas: #111110;
-    --bg-stage: #161615;
-    --bg-elevated: #1D1D1B;
-    --bg-recessed: #0B0B0A;
-
-    /* الطبقة الزجاجية المصنفرة - Dark Frosted Glass */
-    --glass-surface: rgba(29, 29, 27, 0.70);
-    --glass-surface-strong: rgba(35, 35, 33, 0.84);
-    --glass-border: rgba(255, 255, 255, 0.085);
-    --glass-border-subtle: rgba(255, 255, 255, 0.045);
-    --glass-blur: blur(18px) saturate(130%);
-
-    /* الحبر والنصوص */
-    --ink-primary: #F0EDE6;
-    --ink-secondary: #9A9890;
-    --ink-muted: #5E5C56;
-
-    /* النقطة الضوئية الدافئة */
-    --accent-glow: #F27B35;
-    --accent-glow-soft: rgba(242, 123, 53, 0.13);
-    --accent-glow-border: rgba(242, 123, 53, 0.35);
-    --accent-glow-shadow: 0 0 22px rgba(242, 123, 53, 0.42);
-
-    /* الظلال النيومورفيك الداكنة */
-    --shadow-raised: 10px 14px 28px rgba(0, 0, 0, 0.62), -4px -4px 12px rgba(255, 255, 255, 0.025);
-    --shadow-raised-sm: 5px 7px 14px rgba(0, 0, 0, 0.55), -2px -2px 6px rgba(255, 255, 255, 0.02);
-    --shadow-inset: inset 3px 3px 8px rgba(0, 0, 0, 0.74), inset -2px -2px 6px rgba(255, 255, 255, 0.03);
-    --shadow-inset-deep: inset 5px 5px 12px rgba(0, 0, 0, 0.84), inset -3px -3px 8px rgba(255, 255, 255, 0.035);
-  }
-
   html {
-    font-size: clamp(14px, 1.5vw, 16px);
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
+    direction: rtl;
     scroll-behavior: smooth;
+    background-color: var(--bg-canvas);
+    color: var(--ink-primary);
   }
 
   body {
-    @apply antialiased;
-    font-family: 'Tajawal', 'Cairo', sans-serif;
-    direction: rtl;
     background-color: var(--bg-canvas);
     color: var(--ink-primary);
-    transition: background-color 0.35s ease, color 0.35s ease;
-    padding-left: var(--safe-left);
-    padding-right: var(--safe-right);
+    font-family: 'Tajawal', 'Cairo', system-ui, -apple-system, sans-serif;
     min-height: 100dvh;
     overflow-x: hidden;
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  * {
-    box-sizing: border-box;
-    max-width: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   button,
-  a {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
+  a,
   input,
-  button,
-  select {
-    min-height: 40px;
+  textarea,
+  select,
+  [tabindex] {
+    outline-offset: 3px;
   }
 
-  input[dir="rtl"],
-  textarea[dir="rtl"] {
-    text-align: right;
-  }
-}
-
-@layer components {
-  .bento-stage {
-    background: var(--bg-stage);
-    border-radius: 32px;
-    box-shadow: var(--shadow-raised);
-    border: 1px solid var(--glass-border-subtle);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  }
-
-  .tactile-card,
-  .glass-card {
-    background: var(--glass-surface);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-raised);
-    border-radius: 24px;
-    transition: transform 0.25s ease, background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  }
-
-  .recessed-well {
-    background: var(--bg-recessed);
-    box-shadow: var(--shadow-inset);
-    border-radius: 9999px;
-    border: 1px solid var(--glass-border-subtle);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .recessed-box {
-    background: var(--bg-recessed);
-    box-shadow: var(--shadow-inset);
-    border-radius: 20px;
-    border: 1px solid var(--glass-border-subtle);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .tactile-pill {
-    background: var(--bg-elevated);
-    box-shadow: var(--shadow-raised-sm);
-    border: 1px solid var(--glass-border);
-    border-radius: 9999px;
-    transition: transform 0.2s ease, background-color 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-  }
-
-  .tactile-pill:active {
-    box-shadow: var(--shadow-inset);
-  }
-
-  .active-ayah-glow {
-    background: var(--accent-glow-soft);
-    border: 1px solid var(--accent-glow-border);
-    box-shadow: var(--shadow-raised-sm);
-  }
-
-  .amber-glow-dot {
-    background-color: var(--accent-glow);
-    box-shadow: var(--accent-glow-shadow);
-  }
-
-  .text-amber-glow {
-    background: linear-gradient(110deg, var(--ink-primary) 20%, var(--accent-glow) 52%, var(--ink-primary) 85%);
-    background-size: 200% auto;
-    color: transparent;
-    -webkit-background-clip: text;
-    background-clip: text;
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent-glow);
+    outline-offset: 2px;
   }
 }
 
-/* ── Scrollbar hiding ── */
+/* Tactile Neumorphic Surfaces */
+.bento-stage {
+  background-color: var(--bg-stage);
+  border: 1px solid var(--border-tactile);
+  border-radius: 28px;
+  box-shadow: var(--shadow-raised);
+}
+
+.tactile-card {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-tactile);
+  border-radius: 22px;
+  box-shadow: var(--shadow-raised-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.tactile-pill {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-tactile);
+  border-radius: 9999px;
+  box-shadow: var(--shadow-raised-sm);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.tactile-pill:active {
+  transform: scale(0.98);
+}
+
+.recessed-box {
+  background-color: var(--bg-recessed);
+  border: 1px solid var(--border-tactile);
+  border-radius: 18px;
+  box-shadow: var(--shadow-recessed);
+}
+
+.recessed-well {
+  background-color: var(--bg-recessed);
+  border: 1px solid var(--border-tactile);
+  border-radius: 9999px;
+  box-shadow: var(--shadow-recessed);
+}
+
+/* Subtle Glassmorphism reserved strictly for floating bars/drawers/audio bar */
+.glass-card {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border-subtle);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 12px 32px rgba(24, 26, 24, 0.1);
+}
+
+:root[data-theme='dark'] .glass-card {
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+}
+
+.active-ayah-glow {
+  background-color: var(--glow-soft);
+  border-color: var(--glow-border) !important;
+  box-shadow: 0 0 0 1px var(--glow-border);
+}
+
+.amber-glow-dot {
+  background: var(--accent-glow);
+  box-shadow: 0 0 10px var(--glow-border);
+}
+
+/* Reading Surface Customization Presets */
+.mushaf-surface-cream {
+  background-color: #FAF7F0;
+  color: #181A18;
+}
+:root[data-theme='dark'] .mushaf-surface-cream {
+  background-color: #272C29;
+  color: #F4EFE6;
+}
+
+.mushaf-surface-paper {
+  background-color: #FDF9EE;
+  color: #201C16;
+}
+
+.mushaf-surface-night {
+  background-color: #181B19;
+  color: #EAE4D7;
+}
+
+/* Quran Font Helpers */
+.font-uthmanic {
+  font-family: 'UthmanicHafs', 'Amiri Quran', 'Amiri', 'Noto Naskh Arabic', serif;
+  font-feature-settings: 'liga' 1, 'calt' 1, 'kern' 1;
+}
+
+.font-amiri {
+  font-family: 'Amiri Quran', 'Amiri', 'Noto Naskh Arabic', serif;
+}
+
+.font-naskh {
+  font-family: 'Noto Naskh Arabic', 'Amiri', serif;
+}
+
+.quran-text-render {
+  text-rendering: optimizeLegibility;
+  font-variant-ligatures: contextual common-ligatures;
+}
+
+.auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+/* Scrollbars */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
-
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* ── Smooth gradient mask ── */
-.mask-linear-gradient {
-  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-}
-
-/* ── Consistent section spacing ── */
-.section-pad {
-  @apply px-4 sm:px-6 lg:px-8;
-}
-
-/* ── Page bottom padding ── */
-.page-bottom-pad {
-  padding-bottom: calc(6rem + var(--safe-bottom));
-}
-
-@media (min-width: 1024px) {
-  .page-bottom-pad {
-    padding-bottom: calc(2.5rem + var(--safe-bottom));
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
-}
-
-/* ── Fluid card grid ── */
-.auto-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-  gap: 1rem;
-}
-
-/* ── Mobile Quran Text Legibility & Tashkeel spacing ── */
-@media (max-width: 640px) {
-  .font-amiri,
-  .font-uthmanic {
-    line-height: 2.4;
-    letter-spacing: 0.02em;
-    font-weight: 400;
-    text-shadow: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -71,8 +71,24 @@ const AUDIO_SOURCES = {
 
 const SeasonalWidget = () => {
   const [activeTab, setActiveTab] = useState('tasbih'); // 'tasbih', 'duas', 'virtues'
-  const [tasbihCount, setTasbihCount] = useState(0);
+  const [tasbihCount, setTasbihCount] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem('yaqeen_tasbih_count');
+      const num = Number(stored);
+      return Number.isFinite(num) && num >= 0 ? num : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [activePhraseIdx, setActivePhraseIdx] = useState(0);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('yaqeen_tasbih_count', String(tasbihCount));
+    } catch {
+      // Ignore
+    }
+  }, [tasbihCount]);
 
   const [activeAudioKey, setActiveAudioKey] = useState(null);
   const [playbackStates, setPlaybackStates] = useState({
@@ -325,7 +341,7 @@ const SeasonalWidget = () => {
                 <span className="text-[11px] font-bold text-ink-muted block">
                   عدد التسبيحات
                 </span>
-                <span className="text-4xl font-black font-cairo text-ink tracking-tight">
+                <span className="text-4xl font-extrabold font-tajawal text-ink tracking-tight leading-none mt-1 block">
                   {tasbihCount.toLocaleString('ar-EG')}
                 </span>
               </div>

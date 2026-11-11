@@ -1,300 +1,422 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Book, Mic, ArrowLeft, Radio } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Search,
+  BookOpen,
+  Mic2,
+  Radio as RadioIcon,
+  Layers,
+  Landmark,
+  Users,
+  ShieldCheck,
+  Bookmark,
+  Film,
+  ArrowLeft,
+  AlertCircle,
+} from 'lucide-react';
+import { ModalDialog } from './ui/OverlayPrimitives';
 import { useAppStore } from '../store/useAppStore';
+import { fetchAllSurahs, searchQuranVerses } from '../features/quran/quranApi';
+import { JUZ_LIST } from '../features/quran/juzMetadata';
 import { recitersData } from '../lib/data/recitersData';
 import { radioData } from '../lib/data/radioData';
+import { seerahData } from '../lib/data/seerahData';
+import { sahabaData } from '../lib/data/sahabaData';
+import { quranStoriesData } from '../lib/data/quranStoriesData';
+import { ruqyahText, morningAdhkar, eveningAdhkar } from '../lib/data/ruqyahData';
+import { getBookmarks } from '../lib/bookmarks';
+import { matchesNormalized, stripSurahPrefix, toArabicDigits } from '../lib/arabicSearch';
 
-const surahsList = [
-  'الفاتحة', 'البقرة', 'آل عمران', 'النساء', 'المائدة', 'الأنعام', 'الأعراف', 'الأنفال', 'التوبة', 'يونس',
-  'هود', 'يوسف', 'الرعد', 'إبراهيم', 'الحجر', 'النحل', 'الإسراء', 'الكهف', 'مريم', 'طه', 'الأنبياء', 'الحج',
-  'المؤمنون', 'النور', 'الفرقان', 'الشعراء', 'النمل', 'القصص', 'العنكبوت', 'الروم', 'لقمان', 'السجدة',
-  'الأحزاب', 'سبأ', 'فاطر', 'يس', 'الصافات', 'ص', 'الزمر', 'غافر', 'فصلت', 'الشورى', 'الزخرف', 'الدخان',
-  'الجاثية', 'الأحقاف', 'محمد', 'الفتح', 'الحجرات', 'ق', 'الذاريات', 'الطور', 'النجم', 'القمر', 'الرحمن',
-  'الواقعة', 'الحديد', 'المجادلة', 'الحشر', 'الممتحنة', 'الصف', 'الجمعة', 'المنافقون', 'التغابن', 'الطلاق',
-  'التحريم', 'الملك', 'القلم', 'الحاقة', 'المعارج', 'نوح', 'الجن', 'المزمل', 'المدثر', 'القيامة', 'الإنسان',
-  'المرسلات', 'النبأ', 'النازعات', 'عبس', 'التكوير', 'الانفطار', 'المطففين', 'الانشقاق', 'البروج', 'الطارق',
-  'الأعلى', 'الغاشية', 'الفجر', 'البلد', 'الشمس', 'الليل', 'الضحى', 'الشرح', 'التين', 'العلق', 'القدر',
-  'البينة', 'الزلزلة', 'العاديات', 'القارعة', 'التكاثر', 'العصر', 'الهمزة', 'الفيل', 'قريش', 'الماعون',
-  'الكوثر', 'الكافرون', 'النصر', 'المسد', 'الإخلاص', 'الفلق', 'الناس',
-].map((name, idx) => ({ id: idx + 1, name }));
+const QUICK_SUGGESTIONS = ['البقرة', 'آية الكرسي', 'مشاري العفاسي', 'القاهرة', 'أصحاب الأخدود', 'أبو بكر'];
 
 const SearchOverlay = ({ isOpen, onClose }) => {
-  const { setReciter } = useAppStore();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState({ surahs: [], reciters: [], radios: [] });
-  const [versesResults, setVersesResults] = useState([]);
-  const [isSearchingVerses, setIsSearchingVerses] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [verses, setVerses] = useState([]);
+  const [versesLoading, setVersesLoading] = useState(false);
+  const [versesError, setVersesError] = useState(false);
+  const [activeResultIdx, setActiveResultIdx] = useState(0);
+
   const navigate = useNavigate();
+  const setReciter = useAppStore((s) => s.setReciter);
+
+  const { data: surahs = [] } = useQuery({
+    queryKey: ['all-surahs'],
+    queryFn: ({ signal }) => fetchAllSurahs(signal),
+    enabled: isOpen,
+    staleTime: 1000 * 60 * 60 * 24,
+  });
 
   useEffect(() => {
-    if (!query.trim()) {
-      setResults({ surahs: [], reciters: [], radios: [] });
-      return;
+    if (!isOpen) {
+      setQuery('');
+      setDebouncedQuery('');
+      setVerses([]);
+      setVersesError(false);
+      setActiveResultIdx(0);
     }
-    const q = query.toLowerCase();
+  }, [isOpen]);
 
-    const matchedSurahs = surahsList.filter((s) => s.name.includes(q)).slice(0, 5);
-    const matchedReciters = recitersData
-      .filter((r) => r.name.toLowerCase().includes(q))
-      .slice(0, 5);
-    const matchedRadios = radioData
-      .filter((r) => r.name.toLowerCase().includes(q))
-      .slice(0, 5);
-
-    setResults({
-      surahs: matchedSurahs,
-      reciters: matchedReciters,
-      radios: matchedRadios,
-    });
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQuery(query.trim()), 260);
+    return () => window.clearTimeout(id);
   }, [query]);
 
   useEffect(() => {
-    if (!query.trim() || query.length < 3) {
-      setVersesResults([]);
-      return;
+    if (!isOpen || debouncedQuery.length < 2) {
+      setVerses([]);
+      setVersesError(false);
+      setVersesLoading(false);
+      return undefined;
     }
 
-    const delayDebounce = setTimeout(async () => {
-      setIsSearchingVerses(true);
-      try {
-        const response = await fetch(
-          `https://api.alquran.cloud/v1/search/${encodeURIComponent(query)}/all/ar`
-        );
-        const json = await response.json();
-        if (json.code === 200 && json.data && json.data.matches) {
-          setVersesResults(json.data.matches.slice(0, 10));
-        } else {
-          setVersesResults([]);
+    const controller = new AbortController();
+    setVersesLoading(true);
+    setVersesError(false);
+
+    searchQuranVerses(debouncedQuery, controller.signal)
+      .then((matches) => {
+        setVerses(matches);
+      })
+      .catch((err) => {
+        if (err?.name !== 'AbortError') {
+          setVersesError(true);
+          setVerses([]);
         }
-      } catch (err) {
-        console.error('Error searching verses:', err);
-      } finally {
-        setIsSearchingVerses(false);
-      }
-    }, 450);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setVersesLoading(false);
+        }
+      });
 
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
+    return () => controller.abort();
+  }, [debouncedQuery, isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') onClose?.();
+  const localResults = useMemo(() => {
+    if (!query.trim()) {
+      return { surahs: [], juz: [], reciters: [], radios: [], seerah: [], sahaba: [], stories: [], adhkar: [], bookmarks: [] };
+    }
+
+    const q = query.trim();
+
+    return {
+      surahs: surahs
+        .filter(
+          (s) =>
+            matchesNormalized(s.name, q) ||
+            matchesNormalized(stripSurahPrefix(s.name), q) ||
+            matchesNormalized(s.englishName, q) ||
+            matchesNormalized(String(s.number), q)
+        )
+        .slice(0, 6),
+      juz: JUZ_LIST.filter(
+        (j) =>
+          matchesNormalized(j.name, q) ||
+          matchesNormalized(j.surahName, q) ||
+          matchesNormalized(String(j.number), q)
+      ).slice(0, 4),
+      reciters: recitersData
+        .filter((r) => matchesNormalized(r.name, q) || matchesNormalized(r.group, q))
+        .slice(0, 5),
+      radios: radioData
+        .filter((r) => matchesNormalized(r.name, q) || matchesNormalized(r.type, q))
+        .slice(0, 4),
+      seerah: seerahData
+        .filter(
+          (s) =>
+            matchesNormalized(s.title, q) ||
+            matchesNormalized(s.phase, q) ||
+            s.content.some((c) => matchesNormalized(c, q))
+        )
+        .slice(0, 3),
+      sahaba: sahabaData
+        .filter(
+          (s) =>
+            matchesNormalized(s.name, q) ||
+            matchesNormalized(s.title, q) ||
+            s.slides.some((sl) => matchesNormalized(sl.text, q))
+        )
+        .slice(0, 3),
+      stories: quranStoriesData
+        .filter(
+          (ep) =>
+            matchesNormalized(ep.title, q) ||
+            matchesNormalized(ep.rawTitle, q) ||
+            matchesNormalized(ep.categoryLabel, q)
+        )
+        .slice(0, 5),
+      adhkar: [...ruqyahText, ...morningAdhkar, ...eveningAdhkar]
+        .filter((d) => matchesNormalized(d.title, q) || matchesNormalized(d.text, q))
+        .slice(0, 3),
+      bookmarks: getBookmarks()
+        .filter(
+          (b) =>
+            matchesNormalized(b.surah_name || '', q) ||
+            matchesNormalized(b.ayah_text || '', q)
+        )
+        .slice(0, 4),
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
+  }, [query, surahs]);
+
+  // Flat navigable action items for keyboard arrow navigation
+  const flatItems = useMemo(() => {
+    const items = [];
+    localResults.surahs.forEach((s) =>
+      items.push({
+        key: `surah-${s.number}`,
+        group: 'السور',
+        label: `سورة ${stripSurahPrefix(s.name)}`,
+        meta: `${toArabicDigits(s.numberOfAyahs)} آية`,
+        icon: BookOpen,
+        onSelect: () => {
+          onClose();
+          navigate(`/surah/${s.number}`);
+        },
+      })
+    );
+    localResults.juz.forEach((j) =>
+      items.push({
+        key: `juz-${j.number}`,
+        group: 'الأجزاء',
+        label: `الجزء ${toArabicDigits(j.number)} (${j.name})`,
+        meta: `سورة ${j.surahName}`,
+        icon: Layers,
+        onSelect: () => {
+          onClose();
+          navigate(`/surah/${j.surahNumber}?ayah=${j.ayahNumber}`);
+        },
+      })
+    );
+    localResults.reciters.forEach((r) =>
+      items.push({
+        key: `reciter-${r.id}`,
+        group: 'القراء',
+        label: r.name,
+        meta: r.group,
+        icon: Mic2,
+        onSelect: () => {
+          setReciter(r.id);
+          onClose();
+          navigate('/reciters');
+        },
+      })
+    );
+    localResults.radios.forEach((rad) =>
+      items.push({
+        key: `radio-${rad.id}`,
+        group: 'الإذاعات',
+        label: rad.name,
+        meta: rad.status === 'unavailable' ? 'متوقف مؤقتاً' : rad.type,
+        icon: RadioIcon,
+        onSelect: () => {
+          onClose();
+          navigate(`/radio?station=${rad.id}`);
+        },
+      })
+    );
+    localResults.bookmarks.forEach((bm) =>
+      items.push({
+        key: `bm-${bm.surah_id}-${bm.ayah_num}`,
+        group: 'المحفوظات',
+        label: `سورة ${stripSurahPrefix(bm.surah_name)} · آية ${toArabicDigits(bm.ayah_num)}`,
+        meta: 'آية محفوظة',
+        icon: Bookmark,
+        onSelect: () => {
+          onClose();
+          navigate(`/surah/${bm.surah_id}?ayah=${bm.ayah_num}`);
+        },
+      })
+    );
+    localResults.seerah.forEach((st) =>
+      items.push({
+        key: `seerah-${st.id}`,
+        group: 'السيرة النبوية',
+        label: st.title,
+        meta: st.phase,
+        icon: Landmark,
+        onSelect: () => {
+          onClose();
+          navigate('/seerah');
+        },
+      })
+    );
+    localResults.sahaba.forEach((sh) =>
+      items.push({
+        key: `sahaba-${sh.id}`,
+        group: 'الصحابة',
+        label: sh.name,
+        meta: sh.title,
+        icon: Users,
+        onSelect: () => {
+          onClose();
+          navigate('/sahaba');
+        },
+      })
+    );
+    localResults.stories.forEach((ep) =>
+      items.push({
+        key: `story-${ep.videoId}`,
+        group: 'قصص القرآن',
+        label: ep.title,
+        meta: `${ep.categoryLabel} · الحلقة ${toArabicDigits(ep.episodeNumber)}`,
+        icon: Film,
+        onSelect: () => {
+          onClose();
+          navigate(`/stories?category=${ep.category}&v=${ep.videoId}`);
+        },
+      })
+    );
+    localResults.adhkar.forEach((ad) =>
+      items.push({
+        key: `adhkar-${ad.id}`,
+        group: 'حصن المسلم',
+        label: ad.title,
+        meta: 'الأذكار والرقية',
+        icon: ShieldCheck,
+        onSelect: () => {
+          onClose();
+          navigate('/ruqyah');
+        },
+      })
+    );
+    verses.forEach((v, idx) =>
+      items.push({
+        key: `verse-${v.number}-${idx}`,
+        group: 'الآيات القرآنية',
+        label: v.text,
+        meta: `سورة ${stripSurahPrefix(v.surah.name)} · آية ${toArabicDigits(v.numberInSurah)}`,
+        icon: BookOpen,
+        isVerse: true,
+        onSelect: () => {
+          onClose();
+          navigate(`/surah/${v.surah.number}?ayah=${v.numberInSurah}`, {
+            state: { highlightAyahIndex: v.numberInSurah - 1 },
+          });
+        },
+      })
+    );
+    return items;
+  }, [localResults, verses, navigate, onClose, setReciter]);
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveResultIdx((i) => Math.min(flatItems.length - 1, i + 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveResultIdx((i) => Math.max(0, i - 1));
+    } else if (e.key === 'Enter' && flatItems[activeResultIdx]) {
+      e.preventDefault();
+      flatItems[activeResultIdx].onSelect();
+    }
+  };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          key="search-overlay-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[1000] flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/50 backdrop-blur-md font-tajawal"
-          dir="rtl"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: -16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.96 }}
-            transition={{ duration: 0.2 }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-2xl tactile-card overflow-hidden p-4 sm:p-5 flex flex-col gap-4"
-          >
-            {/* Search Input Header */}
-            <div className="recessed-well px-4 py-2 flex items-center gap-3">
-              <Search className="text-glow shrink-0" size={18} />
-              <input
-                autoFocus
-                type="text"
-                placeholder="ابحث عن اسم سورة، قارئ، إذاعة، أو كلمة قرآنية..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 bg-transparent text-base sm:text-lg font-bold outline-none text-ink placeholder:text-ink-muted"
-              />
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-9 h-9 rounded-full tactile-pill flex items-center justify-center text-ink-secondary hover:text-ink shrink-0"
-                aria-label="إغلاق البحث"
-              >
-                <X size={16} />
-              </button>
+    <ModalDialog
+      open={isOpen}
+      onClose={onClose}
+      title="البحث الشامل في يقين"
+      subtitle="ابحث في السور، الآيات، القراء، الإذاعات، السيرة، والصحابة بدون تشكيل"
+      maxWidthClass="max-w-2xl"
+    >
+      <div className="flex flex-col gap-4 p-1 font-tajawal" dir="rtl">
+        <div className="recessed-well px-4 py-2.5 flex items-center gap-3">
+          <Search size={17} className="text-glow shrink-0" />
+          <input
+            autoFocus
+            type="text"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActiveResultIdx(0);
+            }}
+            onKeyDown={handleInputKeyDown}
+            placeholder="اكتب للبحث (مثال: ال عمران، الله لا اله الا هو، المنشاوي)..."
+            aria-label="حقل البحث الشامل"
+            className="flex-1 bg-transparent text-sm sm:text-base font-bold text-ink outline-none placeholder:text-ink-muted"
+          />
+        </div>
+
+        {!query.trim() ? (
+          <div className="recessed-box p-6 flex flex-col items-center gap-4 text-center">
+            <p className="text-xs sm:text-sm font-semibold text-ink-secondary">
+              اقتراحات بحث سريعة:
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {QUICK_SUGGESTIONS.map((sugg) => (
+                <button
+                  key={sugg}
+                  type="button"
+                  onClick={() => setQuery(sugg)}
+                  className="tactile-pill px-3.5 py-1.5 text-xs font-bold text-ink hover:text-glow"
+                >
+                  {sugg}
+                </button>
+              ))}
             </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {versesLoading && (
+              <div className="flex items-center justify-center gap-2 py-3 text-xs font-bold text-ink-secondary">
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-glow border-t-transparent animate-spin" />
+                <span>جاري البحث في آيات القرآن الكريم...</span>
+              </div>
+            )}
 
-            {/* Results Area */}
-            <div className="max-h-[60vh] overflow-y-auto no-scrollbar">
-              {!query.trim() ? (
-                <div className="recessed-box p-10 text-center">
-                  <p className="text-sm font-medium text-ink-secondary">
-                    ابدأ الكتابة للبحث في المصحف الشريف، القراء، والإذاعات...
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-5 p-1">
-                  {/* Surahs Results */}
-                  {results.surahs.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-bold mb-2.5 text-ink-muted px-1">
-                        السور
-                      </h3>
-                      <div className="space-y-2">
-                        {results.surahs.map((surah) => (
-                          <button
-                            key={surah.id}
-                            type="button"
-                            onClick={() => {
-                              onClose();
-                              navigate(`/surah/${surah.id}`);
-                            }}
-                            className="w-full flex items-center justify-between p-3.5 recessed-box hover:border-glow-border transition-all text-ink"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="w-9 h-9 rounded-xl tactile-pill flex items-center justify-center text-glow">
-                                <Book size={16} />
-                              </span>
-                              <span className="font-bold text-base font-amiri">
-                                سورة {surah.name}
-                              </span>
-                            </div>
-                            <ArrowLeft size={15} className="text-ink-muted" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+            {versesError && (
+              <div className="recessed-box p-3 text-xs text-ink-secondary flex items-center gap-2">
+                <AlertCircle size={14} className="text-glow shrink-0" />
+                <span>تعذر البحث النصي في الآيات حالياً، تم عرض النتائج المحلية أدناه.</span>
+              </div>
+            )}
 
-                  {/* Reciters Results */}
-                  {results.reciters.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-bold mb-2.5 text-ink-muted px-1">
-                        القراء
-                      </h3>
-                      <div className="space-y-2">
-                        {results.reciters.map((reciter) => (
-                          <button
-                            key={reciter.id}
-                            type="button"
-                            onClick={() => {
-                              setReciter(reciter.id);
-                              onClose();
-                              navigate('/quran');
-                            }}
-                            className="w-full flex items-center justify-between p-3.5 recessed-box hover:border-glow-border transition-all text-ink"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="w-9 h-9 rounded-xl tactile-pill flex items-center justify-center text-glow">
-                                <Mic size={16} />
-                              </span>
-                              <span className="font-bold text-sm">{reciter.name}</span>
-                            </div>
-                            <ArrowLeft size={15} className="text-ink-muted" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Radios Results */}
-                  {results.radios?.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-bold mb-2.5 text-ink-muted px-1">
-                        الإذاعات
-                      </h3>
-                      <div className="space-y-2">
-                        {results.radios.map((radio) => (
-                          <button
-                            key={radio.id}
-                            type="button"
-                            onClick={() => {
-                              onClose();
-                              navigate(`/radio?station=${radio.id}`);
-                            }}
-                            className="w-full flex items-center justify-between p-3.5 recessed-box hover:border-glow-border transition-all text-ink"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="w-9 h-9 rounded-xl tactile-pill flex items-center justify-center text-glow">
-                                <Radio size={16} />
-                              </span>
-                              <span className="font-bold text-sm">{radio.name}</span>
-                            </div>
-                            <ArrowLeft size={15} className="text-ink-muted" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Verses Results */}
-                  {isSearchingVerses && (
-                    <div className="flex items-center justify-center py-5 gap-3">
-                      <div className="w-4 h-4 rounded-full border-2 border-glow border-t-transparent animate-spin" />
-                      <span className="text-xs font-bold text-ink-secondary">
-                        جاري البحث في آيات الذكر الحكيم...
+            {flatItems.length === 0 && !versesLoading ? (
+              <div className="recessed-box p-8 text-center text-sm font-bold text-ink-secondary">
+                لا توجد نتائج مطابقة لعبارة «{query}».
+              </div>
+            ) : (
+              flatItems.map((item, idx) => {
+                const Icon = item.icon;
+                const focused = idx === activeResultIdx;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={item.onSelect}
+                    onMouseEnter={() => setActiveResultIdx(idx)}
+                    className={`w-full text-right p-3.5 rounded-2xl flex items-center justify-between gap-3 transition-all ${
+                      focused ? 'tactile-card active-ayah-glow' : 'recessed-box hover:border-glow-border'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <span className="w-9 h-9 rounded-xl tactile-pill flex items-center justify-center text-glow shrink-0">
+                        <Icon size={15} />
                       </span>
-                    </div>
-                  )}
-
-                  {versesResults.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-bold mb-2.5 text-ink-muted px-1">
-                        الآيات القرآنية
-                      </h3>
-                      <div className="space-y-2.5">
-                        {versesResults.map((verse, idx) => (
-                          <button
-                            key={`${verse.number}-${idx}`}
-                            type="button"
-                            onClick={() => {
-                              onClose();
-                              navigate(`/surah/${verse.surah.number}`, {
-                                state: {
-                                  highlightAyahIndex: verse.numberInSurah - 1,
-                                },
-                              });
-                            }}
-                            className="w-full text-right p-4 recessed-box hover:border-glow-border transition-all flex flex-col gap-2.5"
-                          >
-                            <p className="font-uthmanic text-xl leading-relaxed text-right w-full text-ink">
-                              {verse.text}
-                            </p>
-                            <div className="flex justify-between items-center text-xs w-full">
-                              <span className="tactile-pill px-3 py-1 text-[11px] font-bold text-glow">
-                                سورة {verse.surah.name.replace('سُورَةُ ', '')} · الآية{' '}
-                                {verse.numberInSurah.toLocaleString('ar-EG')}
-                              </span>
-                              <span className="flex items-center gap-1 text-ink-secondary font-bold">
-                                الانتقال والاستماع <ArrowLeft size={12} />
-                              </span>
-                            </div>
-                          </button>
-                        ))}
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`${
+                            item.isVerse ? 'font-uthmanic text-base sm:text-lg leading-relaxed' : 'font-bold text-sm'
+                          } text-ink truncate`}
+                        >
+                          {item.label}
+                        </p>
+                        <span className="text-[11px] text-ink-muted block truncate">
+                          {item.group} · {item.meta}
+                        </span>
                       </div>
                     </div>
-                  )}
-
-                  {results.surahs.length === 0 &&
-                    results.reciters.length === 0 &&
-                    (!results.radios || results.radios.length === 0) &&
-                    versesResults.length === 0 &&
-                    !isSearchingVerses && (
-                      <div className="recessed-box p-8 text-center text-sm font-bold text-ink-secondary">
-                        لا توجد نتائج مطابقة لبحثك.
-                      </div>
-                    )}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                    <ArrowLeft size={14} className="text-ink-muted shrink-0" />
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
+    </ModalDialog>
   );
 };
 

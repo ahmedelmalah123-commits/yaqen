@@ -36,3 +36,8 @@ android-app/
 bin/
 gen/
 out/
+
+# Vercel & QA artifacts
+.vercel/
+playwright-report/
+test-results/

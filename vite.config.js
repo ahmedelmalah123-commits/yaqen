@@ -1,37 +1,45 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/',
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo.png'],
+      includeAssets: ['logo.png', 'logo-wide.png', 'fonts/UthmanicHafs1Ver18.woff2'],
       manifest: {
-        name: 'اليقين | Yaqeen',
-        short_name: 'اليقين',
-        description: 'منصة اليقين للصوتيات والمرئيات الإسلامية',
-        theme_color: '#0F3D2E',
-        background_color: '#0A1A14',
+        id: '/',
+        name: 'يقين — معرفة تُثمر يقيناً',
+        short_name: 'يقين',
+        description: 'منصة قرآنية إسلامية تجمع القرآن الكريم والتفسير والتلاوات والإذاعات والسيرة والأذكار.',
+        start_url: '/',
+        scope: '/',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'portrait-primary',
+        theme_color: '#F3EEE4',
+        background_color: '#F3EEE4',
+        lang: 'ar',
+        dir: 'rtl',
+        categories: ['books', 'education', 'lifestyle'],
         icons: [
           {
             src: '/logo.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable',
           },
           {
             src: '/logo.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
+            purpose: 'any maskable',
+          },
+        ],
       },
       workbox: {
-        navigateFallbackDenylist: [/\.mp3$/],
+        navigateFallbackDenylist: [/^\/api\//, /\.mp3$/],
         runtimeCaching: [
           {
             urlPattern: /\.mp3$/,
@@ -40,9 +48,9 @@ export default defineConfig({
               cacheName: 'audio-cache',
               rangeRequests: true,
               cacheableResponse: {
-                statuses: [0, 200, 206]
-              }
-            }
+                statuses: [0, 200, 206],
+              },
+            },
           },
           {
             urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
@@ -50,16 +58,21 @@ export default defineConfig({
             options: {
               cacheName: 'quran-api-cache',
               expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 Days
+                maxEntries: 150,
+                maxAgeSeconds: 60 * 60 * 24 * 7,
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      }
-    })
-  ]
-})
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
+      },
+    }),
+  ],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./tests/setupTests.ts'],
+  },
+});

@@ -1,10 +1,6 @@
-import React, { useState, lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import React, { lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import GlobalLayout from './components/GlobalLayout';
-import CinematicIntro from './components/CinematicIntro';
-import SiteTour from './components/SiteTour';
-import { useAppStore } from './store/useAppStore';
 
 const Home = lazy(() => import('./pages/Home'));
 const Quran = lazy(() => import('./pages/Quran'));
@@ -16,81 +12,40 @@ const Yaqeen = lazy(() => import('./pages/Yaqeen'));
 const Radio = lazy(() => import('./pages/Radio'));
 const Ruqyah = lazy(() => import('./pages/Ruqyah'));
 const RecitersPage = lazy(() => import('./pages/RecitersPage'));
+const QuranStories = lazy(() => import('./pages/QuranStories'));
+const KnowledgeHub = lazy(() => import('./pages/KnowledgeHub'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
-const AnimatedRoutes = () => {
-  const location = useLocation();
-
-  return (
-    <AnimatePresence mode="wait">
-      <Suspense
-        fallback={
-          <div className="min-h-[60vh] flex items-center justify-center text-ink-secondary font-bold text-lg">
-            جاري التحميل...
-          </div>
-        }
-      >
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Home />} />
-          <Route path="/quran" element={<Quran />} />
-          <Route path="/surah/:id" element={<Surah />} />
-          <Route path="/sahaba" element={<Sahaba />} />
-          <Route path="/sahaba/:id" element={<Story />} />
-          <Route path="/seerah" element={<Seerah />} />
-          <Route path="/yaqeen" element={<Yaqeen />} />
-          <Route path="/radio" element={<Radio />} />
-          <Route path="/ruqyah" element={<Ruqyah />} />
-          <Route path="/reciters" element={<RecitersPage />} />
-        </Routes>
-      </Suspense>
-    </AnimatePresence>
-  );
-};
+const PageFallback = () => (
+  <div className="min-h-[55vh] flex items-center justify-center text-ink-secondary font-bold text-sm">
+    جاري التحميل...
+  </div>
+);
 
 function App() {
-  const [introFinished, setIntroFinished] = useState(false);
-  const { theme } = useAppStore();
-
-  useEffect(() => {
-    const setMediaMetadata = () => {
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: 'يقين — معرفة تُثمر يقيناً',
-          artist: 'منصة يقين',
-          artwork: [
-            { src: 'https://yaaqeen.netlify.app/logo.png', type: 'image/png' },
-            { src: window.location.origin + '/logo.png', type: 'image/png' },
-          ],
-        });
-      }
-    };
-
-    setMediaMetadata();
-    document.addEventListener('play', setMediaMetadata, true);
-
-    return () => {
-      document.removeEventListener('play', setMediaMetadata, true);
-    };
-  }, []);
-
   return (
-    <div className={theme}>
-      {!introFinished && (
-        <CinematicIntro onComplete={() => setIntroFinished(true)} />
-      )}
-
-      <div
-        className={`transition-opacity duration-700 ${
-          introFinished ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'
-        }`}
-      >
-        <Router>
-          <GlobalLayout>
-            {introFinished && <SiteTour />}
-            <AnimatedRoutes />
-          </GlobalLayout>
-        </Router>
-      </div>
-    </div>
+    <Router>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+          <Route element={<GlobalLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/quran" element={<Quran />} />
+            <Route path="/surah/:id" element={<Surah />} />
+            <Route path="/sahaba" element={<Sahaba />} />
+            <Route path="/sahaba/:id" element={<Story />} />
+            <Route path="/seerah" element={<Seerah />} />
+            <Route path="/yaqeen" element={<Yaqeen />} />
+            <Route path="/radio" element={<Radio />} />
+            <Route path="/ruqyah" element={<Ruqyah />} />
+            <Route path="/reciters" element={<RecitersPage />} />
+            <Route path="/stories" element={<QuranStories />} />
+            <Route path="/knowledge" element={<KnowledgeHub />} />
+            <Route path="/hub" element={<KnowledgeHub />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </Suspense>
+    </Router>
   );
 }
 

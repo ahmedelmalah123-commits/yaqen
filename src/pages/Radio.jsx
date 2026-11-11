@@ -1,162 +1,145 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Radio as RadioIcon, Play, Pause, AlertTriangle, Loader2 } from 'lucide-react';
 import { radioData } from '../lib/data/radioData';
-import { Radio as RadioIcon, Play, Pause, Waves } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useAudioStore } from '../store/useAudioStore';
+import { SectionHeader } from '../components/ui/Primitives';
 
 const Radio = () => {
   const [searchParams] = useSearchParams();
-  const audioRef = useRef(null);
-  const [playingStationId, setPlayingStationId] = useState(null);
-  const [selectedStationId, setSelectedStationId] = useState(null);
+  const requestedStation = searchParams.get('station');
 
-  const playStation = useCallback(
-    (station) => {
-      const audio = audioRef.current;
-      if (!audio || !station) return;
+  const source = useAudioStore((s) => s.source);
+  const status = useAudioStore((s) => s.status);
+  const playRadio = useAudioStore((s) => s.playRadio);
+  const togglePlayPause = useAudioStore((s) => s.togglePlayPause);
 
-      setSelectedStationId(station.id);
+  const activeStationId = source?.kind === 'radio' ? source.stationId : null;
 
-      if (playingStationId === station.id) {
-        audio.pause();
-        setPlayingStationId(null);
-        return;
-      }
-
-      audio.pause();
-      audio.src = station.url;
-      audio
-        .play()
-        .then(() => {
-          setPlayingStationId(station.id);
-        })
-        .catch(() => {
-          setPlayingStationId(null);
-        });
-    },
-    [playingStationId]
-  );
-
-  // Handle ?station=<id> deep-link from SearchOverlay
   useEffect(() => {
-    const stationParam = searchParams.get('station');
-    if (!stationParam) return;
-    const found = radioData.find((s) => s.id === stationParam);
-    if (found && audioRef.current) {
-      setSelectedStationId(found.id);
-      audioRef.current.pause();
-      audioRef.current.src = found.url;
-      audioRef.current
-        .play()
-        .then(() => setPlayingStationId(found.id))
-        .catch(() => setPlayingStationId(null));
+    if (!requestedStation) return;
+    const found = radioData.find(
+      (s) => s.id === requestedStation && s.status !== 'unavailable'
+    );
+    if (found && activeStationId !== found.id) {
+      playRadio({
+        stationId: found.id,
+        stationName: found.name,
+        stationType: found.type,
+        streamUrl: found.url,
+      });
     }
-  }, [searchParams]);
+  }, [requestedStation, activeStationId, playRadio]);
 
-  // Cleanup audio on unmount
-  useEffect(() => {
-    const audio = audioRef.current;
-    return () => {
-      if (audio) {
-        audio.pause();
-        audio.src = '';
-      }
-    };
-  }, []);
-
-  const activeStation = radioData.find(
-    (s) => s.id === (playingStationId || selectedStationId)
-  );
+  const handleStationClick = (station) => {
+    if (station.status === 'unavailable') return;
+    if (activeStationId === station.id) {
+      togglePlayPause();
+      return;
+    }
+    playRadio({
+      stationId: station.id,
+      stationName: station.name,
+      stationType: station.type,
+      streamUrl: station.url,
+    });
+  };
 
   return (
-    <div className="max-w-[1440px] mx-auto w-full bento-stage p-5 sm:p-8 font-tajawal flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-bold text-ink-muted flex items-center gap-1.5 mb-1">
-            <Waves size={14} className="text-glow" />
-            بث مباشر على مدار الساعة
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-black font-cairo text-ink">
-            إذاعة القرآن الكريم
-          </h1>
-          <p className="text-sm sm:text-base text-ink-secondary mt-1.5">
-            استمع إلى أشهر الإذاعات القرآنية والمختارات المباركة مباشرة
-          </p>
-        </div>
+    <div className="bento-stage p-5 sm:p-8 flex flex-col gap-6 font-tajawal" dir="rtl">
+      <SectionHeader
+        eyebrow="البث الإذاعي المباشر"
+        title="إذاعات القرآن الكريم"
+        description="استمع إلى الإذاعات القرآنية المباشرة في الخلفية بشكل متواصل أثناء تنقلك بين صفحات المنصة."
+      />
 
-        {activeStation && (
-          <div className="recessed-well px-4 py-2 flex items-center gap-2.5 self-start sm:self-auto">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                playingStationId ? 'amber-glow-dot animate-pulse' : 'bg-ink-muted'
-              }`}
-            />
-            <span className="text-xs font-bold text-ink truncate max-w-[220px]">
-              {playingStationId ? `يبث الآن: ${activeStation.name}` : `محدد: ${activeStation.name}`}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {radioData.map((station, index) => {
-          const isCurrentPlaying = playingStationId === station.id;
-          const isSelected = selectedStationId === station.id;
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {radioData.map((station) => {
+          const isUnavailable = station.status === 'unavailable';
+          const isSelected = activeStationId === station.id;
+          const isPlaying = isSelected && status === 'playing';
+          const isLoading = isSelected && status === 'loading';
+          const isErrored = isSelected && status === 'error';
 
           return (
-            <motion.button
-              type="button"
+            <button
               key={station.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.04 }}
-              onClick={() => playStation(station)}
-              className={`text-right p-5 sm:p-6 rounded-[24px] flex items-center justify-between gap-4 transition-all group ${
-                isCurrentPlaying || isSelected ? 'active-ayah-glow' : 'tactile-card'
+              type="button"
+              disabled={isUnavailable}
+              onClick={() => handleStationClick(station)}
+              className={`tactile-card p-5 text-right flex items-center justify-between gap-4 transition-all ${
+                isUnavailable
+                  ? 'opacity-65 cursor-not-allowed'
+                  : isSelected
+                  ? 'active-ayah-glow border-glow-border'
+                  : 'hover:-translate-y-0.5 hover:border-glow-border'
               }`}
             >
-              <div className="flex items-center gap-4 min-w-0">
+              <div className="flex items-center gap-3.5 min-w-0">
                 <div
                   className={`w-12 h-12 rounded-2xl recessed-box flex items-center justify-center shrink-0 ${
-                    isCurrentPlaying ? 'text-glow' : 'text-ink-secondary'
+                    isPlaying ? 'text-glow' : 'text-ink-muted'
                   }`}
                 >
-                  <RadioIcon size={20} />
+                  {isUnavailable ? (
+                    <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400" />
+                  ) : (
+                    <RadioIcon size={20} />
+                  )}
                 </div>
 
                 <div className="min-w-0">
-                  <span className="recessed-well px-2.5 py-0.5 text-[11px] font-bold text-ink-secondary inline-block mb-1.5">
-                    {station.type}
-                  </span>
-                  <h3 className="text-base sm:text-xl font-extrabold font-cairo text-ink truncate">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="recessed-well px-2.5 py-0.5 text-[10px] font-bold text-ink-secondary">
+                      {station.type}
+                    </span>
+                    {isPlaying && (
+                      <span className="text-[10px] font-bold text-glow flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full amber-glow-dot animate-pulse" />
+                        يبث الآن
+                      </span>
+                    )}
+                  </div>
+
+                  <h2 className="text-base font-extrabold font-cairo text-ink truncate">
                     {station.name}
-                  </h3>
+                  </h2>
+
+                  {isUnavailable && (
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 font-semibold">
+                      {station.statusNote || 'البث متوقف مؤقتاً من المصدر'}
+                    </p>
+                  )}
+
+                  {isErrored && (
+                    <p className="text-[11px] text-red-600 dark:text-red-400 mt-1 font-semibold">
+                      تعذر الاتصال بالبث، اضغط لإعادة المحاولة
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div
-                className={`w-12 h-12 rounded-full tactile-pill flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
-                  isCurrentPlaying ? 'text-glow border-glow-border' : 'text-ink'
+                className={`w-11 h-11 rounded-full tactile-pill flex items-center justify-center shrink-0 ${
+                  isUnavailable
+                    ? 'text-ink-muted'
+                    : isPlaying
+                    ? 'active-ayah-glow text-glow'
+                    : 'text-ink'
                 }`}
               >
-                {isCurrentPlaying ? (
-                  <Pause fill="currentColor" size={18} />
+                {isLoading ? (
+                  <Loader2 size={17} className="animate-spin text-glow" />
+                ) : isPlaying ? (
+                  <Pause size={17} fill="currentColor" />
                 ) : (
-                  <Play fill="currentColor" size={18} className="ml-0.5" />
+                  <Play size={17} fill="currentColor" />
                 )}
               </div>
-            </motion.button>
+            </button>
           );
         })}
       </div>
-
-      <audio
-        ref={audioRef}
-        onEnded={() => setPlayingStationId(null)}
-        onError={() => setPlayingStationId(null)}
-      />
     </div>
   );
 };
